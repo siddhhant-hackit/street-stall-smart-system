@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Street Stall CRM",
+  "description": "Street Smart CRM for modern Indian eateries. Includes guest insights, automated campaigns, and a scan-to-order system for customers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
