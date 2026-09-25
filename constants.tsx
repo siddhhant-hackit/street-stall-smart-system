@@ -1,63 +1,126 @@
-
-import { Customer, Reservation, MenuItem } from './types';
+import { Customer, Reservation, MenuItem, Order } from './types';
 
 export const INITIAL_CUSTOMERS: Customer[] = [
   {
-    id: '1',
+    id: 'c1',
     name: 'Aarav Sharma',
-    email: 'aarav.sharma@example.com',
-    phone: '+91 98765 43210',
-    spicePreference: 'Indian Spicy',
-    dietaryRestrictions: [],
-    loyaltyPoints: 1250,
-    lastOrder: 'Chicken Dum Biryani',
-    totalSpend: 15400,
-    visitCount: 12,
-    favoriteDish: 'Biryani',
+    email: 'aarav.sharma@gmail.com',
+    phone: '+91 98201 44521',
+    spicePreference: 'Desi Spicy',
+    dietaryTags: ['Non-Veg', 'Halal'],
+    tier: 'Maharaja VIP',
+    loyaltyPoints: 3450,
+    lastOrder: 'Royal Hyderabadi Dum Biryani + Butter Garlic Naan',
+    totalSpend: 34500,
+    visitCount: 18,
+    favoriteDish: 'Royal Hyderabadi Dum Biryani',
+    familyNotes: 'Family of 4 with 2 teens. Always requests Corner Table #4 in AC Hall and extra spicy mint chutney.',
+    churnRisk: 'Low',
     orderHistory: [
-      { id: 'h1', date: '2024-05-15', total: 450, status: 'Completed' },
-      { id: 'h2', date: '2024-05-10', total: 1200, status: 'Completed' },
-      { id: 'h3', date: '2024-05-02', total: 320, status: 'Completed' },
-      { id: 'h4', date: '2024-04-25', total: 850, status: 'Completed' },
-      { id: 'h5', date: '2024-04-18', total: 150, status: 'Cancelled' }
+      { id: 'h1', date: '2026-09-18', total: 1850, status: 'Completed', dishes: 'Dum Biryani, Butter Chicken, 4 Naans' },
+      { id: 'h2', date: '2026-09-04', total: 2400, status: 'Completed', dishes: 'Maharaja Royal Thali, Paneer Tikka, Mango Lassi' },
+      { id: 'h3', date: '2026-08-20', total: 1600, status: 'Completed', dishes: 'Murgh Malai Kebab, Dum Biryani' },
+      { id: 'h4', date: '2026-08-05', total: 3100, status: 'Completed', dishes: 'Family Dinner - Butter Chicken, Biryani, Roti' }
     ]
   },
   {
-    id: '2',
+    id: 'c2',
     name: 'Priya Patel',
-    email: 'priya.patel@example.com',
-    phone: '+91 91234 56789',
+    email: 'priya.patel@ahmedabadmail.com',
+    phone: '+91 94260 88910',
     spicePreference: 'Mild',
-    dietaryRestrictions: ['Vegetarian', 'Nut Allergy'],
-    loyaltyPoints: 450,
-    lastOrder: 'Paneer Makhani',
-    totalSpend: 6200,
-    visitCount: 5,
-    favoriteDish: 'Paneer Butter Masala',
+    dietaryTags: ['Pure Veg', 'Jain (No Onion/Garlic)'],
+    tier: 'Gold',
+    loyaltyPoints: 1850,
+    lastOrder: 'Dal Makhani (Jain Style) + Saffron Rasmalai',
+    totalSpend: 19800,
+    visitCount: 14,
+    favoriteDish: 'Dal Makhani Bukhara',
+    familyNotes: 'Strict Jain preparation only (No onion, no garlic, root vegetables excluded). Loves gentle cardamom flavours.',
+    churnRisk: 'Low',
     orderHistory: [
-      { id: 'h6', date: '2024-05-18', total: 560, status: 'Completed' },
-      { id: 'h7', date: '2024-05-12', total: 420, status: 'Completed' },
-      { id: 'h8', date: '2024-05-05', total: 900, status: 'Completed' },
-      { id: 'h9', date: '2024-04-28', total: 150, status: 'Completed' },
-      { id: 'h10', date: '2024-04-20', total: 300, status: 'Completed' }
+      { id: 'h5', date: '2026-09-21', total: 1250, status: 'Completed', dishes: 'Jain Dal Makhani, Laccha Paratha, Rasmalai' },
+      { id: 'h6', date: '2026-09-10', total: 1550, status: 'Completed', dishes: 'Shahi Veg Thali (Jain), Masala Chaas' },
+      { id: 'h7', date: '2026-08-28', total: 980, status: 'Completed', dishes: 'Paneer Lababdar (Jain), Butter Roti' }
     ]
   },
   {
-    id: '3',
-    name: 'John Doe',
-    email: 'john.doe@gmail.com',
-    phone: '+1 555-0199',
+    id: 'c3',
+    name: 'Vikram Malhotra',
+    email: 'vikram.malhotra@capstone.in',
+    phone: '+91 98112 30944',
     spicePreference: 'Medium',
-    dietaryRestrictions: [],
-    loyaltyPoints: 300,
-    lastOrder: 'Lamb Rogan Josh',
-    totalSpend: 4100,
-    visitCount: 3,
-    favoriteDish: 'Rogan Josh',
+    dietaryTags: ['Non-Veg'],
+    tier: 'Silver',
+    loyaltyPoints: 890,
+    lastOrder: 'Old Delhi Butter Chicken + Laccha Paratha',
+    totalSpend: 11400,
+    visitCount: 7,
+    favoriteDish: 'Old Delhi Butter Chicken',
+    familyNotes: 'Corporate executive dining with clients. Requests quiet booth, speedy service, and itemized GST bills.',
+    churnRisk: 'Medium',
     orderHistory: [
-      { id: 'h11', date: '2024-05-14', total: 880, status: 'Completed' },
-      { id: 'h12', date: '2024-05-07', total: 450, status: 'Completed' },
-      { id: 'h13', date: '2024-04-30', total: 120, status: 'Refunded' }
+      { id: 'h8', date: '2026-09-12', total: 2100, status: 'Completed', dishes: 'Butter Chicken, Tandoori Roti, Kulhad Chai' },
+      { id: 'h9', date: '2026-08-15', total: 1750, status: 'Completed', dishes: 'Murgh Malai Kebab, Dal Makhani' }
+    ]
+  },
+  {
+    id: 'c4',
+    name: 'Ananya Iyer',
+    email: 'ananya.iyer@fintech.co',
+    phone: '+91 97401 22890',
+    spicePreference: 'Teekha',
+    dietaryTags: ['Pure Veg', 'Nut Allergy'],
+    tier: 'Gold',
+    loyaltyPoints: 1620,
+    lastOrder: 'Mumbai Samosa Chaat + Kulhad Masala Chai',
+    totalSpend: 16400,
+    visitCount: 11,
+    favoriteDish: 'Mumbai Samosa Chaat & Pani Puri',
+    familyNotes: 'Severe Cashew & Almond nut allergy. Always verify gravies are nut-free and seed-based.',
+    churnRisk: 'Low',
+    orderHistory: [
+      { id: 'h10', date: '2026-09-22', total: 850, status: 'Completed', dishes: 'Samosa Chaat, Pani Puri, 2 Masala Chai' },
+      { id: 'h11', date: '2026-09-08', total: 1100, status: 'Completed', dishes: 'Paneer Tikka, Dahi Puri, Chaas' }
+    ]
+  },
+  {
+    id: 'c5',
+    name: 'Rajesh & Sunita Gupta',
+    email: 'rajesh.gupta@textilegroup.com',
+    phone: '+91 98390 11200',
+    spicePreference: 'Medium',
+    dietaryTags: ['Pure Veg'],
+    tier: 'Maharaja VIP',
+    loyaltyPoints: 4200,
+    lastOrder: 'Maharaja Royal Thali + Gulab Jamun',
+    totalSpend: 42800,
+    visitCount: 22,
+    favoriteDish: 'Maharaja Royal Thali',
+    familyNotes: 'Hosts 8-12 member Sunday family lunches. Celebrating 25th Wedding Anniversary in October.',
+    churnRisk: 'Low',
+    orderHistory: [
+      { id: 'h12', date: '2026-09-19', total: 4400, status: 'Completed', dishes: '4x Royal Thali, Gulab Jamun with Rabdi' },
+      { id: 'h13', date: '2026-09-05', total: 3800, status: 'Completed', dishes: 'Family Feast - Paneer Tikka, Dal Bukhara' }
+    ]
+  },
+  {
+    id: 'c6',
+    name: 'Farhan Siddiqui',
+    email: 'farhan.s@creativestudio.com',
+    phone: '+91 98920 77112',
+    spicePreference: 'Desi Spicy',
+    dietaryTags: ['Non-Veg', 'Halal'],
+    tier: 'Silver',
+    loyaltyPoints: 640,
+    lastOrder: 'Kashmiri Mutton Rogan Josh + Garlic Naan',
+    totalSpend: 8600,
+    visitCount: 5,
+    favoriteDish: 'Kashmiri Mutton Rogan Josh',
+    familyNotes: 'Late evening dine-in patron. Has not visited in 35 days (Churn Risk Alert).',
+    churnRisk: 'High',
+    orderHistory: [
+      { id: 'h14', date: '2026-08-18', total: 1800, status: 'Completed', dishes: 'Mutton Rogan Josh, Tandoori Roti' }
     ]
   }
 ];
@@ -65,153 +128,294 @@ export const INITIAL_CUSTOMERS: Customer[] = [
 export const INITIAL_RESERVATIONS: Reservation[] = [
   {
     id: 'r1',
-    customerId: '1',
+    customerId: 'c1',
     customerName: 'Aarav Sharma',
-    date: '2024-05-20',
-    time: '19:30',
+    phone: '+91 98201 44521',
+    date: 'Today',
+    time: '20:00',
     guests: 4,
+    tableArea: 'Main AC Dining',
+    tableNumber: 'Table T-04',
+    occasion: 'Birthday',
     status: 'Confirmed',
-    notes: 'Birthday celebration.'
+    notes: 'Daughter 16th birthday. Table decorated with marigolds. High spice preference.'
+  },
+  {
+    id: 'r2',
+    customerId: 'c5',
+    customerName: 'Rajesh & Sunita Gupta',
+    phone: '+91 98390 11200',
+    date: 'Today',
+    time: '20:45',
+    guests: 8,
+    tableArea: 'Maharaja VIP Cabana',
+    tableNumber: 'Cabana C-01',
+    occasion: 'Family Get-Together',
+    status: 'Confirmed',
+    notes: 'Grandparents attending, requests easy wheelchair access and low background music.'
+  },
+  {
+    id: 'r3',
+    customerId: 'c2',
+    customerName: 'Priya Patel',
+    phone: '+91 94260 88910',
+    date: 'Tomorrow',
+    time: '19:30',
+    guests: 2,
+    tableArea: 'Courtyard Veranda',
+    tableNumber: 'Veranda V-06',
+    occasion: 'Regular Dining',
+    status: 'Pending',
+    notes: 'Pure Jain preparation. Verify kitchen staff uses dedicated Jain pans and ladles.'
+  },
+  {
+    id: 'r4',
+    customerId: 'c3',
+    customerName: 'Vikram Malhotra',
+    phone: '+91 98112 30944',
+    date: 'Tomorrow',
+    time: '13:00',
+    guests: 5,
+    tableArea: 'Main AC Dining',
+    tableNumber: 'Table T-09',
+    occasion: 'Corporate Dinner',
+    status: 'Confirmed',
+    notes: 'Client meeting from London. Pre-order 2 Butter Chicken and Dal Bukhara for 13:15.'
   }
 ];
 
-export const POPULAR_STALL_ITEMS: MenuItem[] = [
-  {
-    id: 'p1',
-    name: 'Vada Pav',
-    price: 40,
-    category: 'Snacks',
-    description: 'The "Burger of Mumbai" - spicy potato fritter in a bun.',
-    image: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 5
-  },
-  {
-    id: 'p2',
-    name: 'Samosa Pav',
-    price: 45,
-    category: 'Snacks',
-    description: 'Crispy samosa served in a soft pav with chutneys.',
-    image: 'https://images.unsplash.com/photo-1601050690597-df056fb01793?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 5
-  },
-  {
-    id: 'p3',
-    name: 'Pani Puri',
-    price: 60,
-    category: 'Snacks',
-    description: 'Hollow puris filled with spicy water and mash.',
-    image: 'https://images.unsplash.com/photo-1601050690597-df056fb01793?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 3
-  },
-  {
-    id: 'p4',
-    name: 'Pav Bhaji',
-    price: 120,
-    category: 'Mains',
-    description: 'Mashed vegetable curry served with buttered bread.',
-    image: 'https://images.unsplash.com/photo-1626132646529-500637534070?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 12
-  },
-  {
-    id: 'p5',
-    name: 'Chole Bhature',
-    price: 150,
-    category: 'Mains',
-    description: 'Spicy chickpeas served with fried fluffy bread.',
-    image: 'https://images.unsplash.com/photo-1596797038558-b8393241ef0a?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 15
-  },
-  {
-    id: 'p6',
-    name: 'Bhel Puri',
-    price: 50,
-    category: 'Snacks',
-    description: 'Puffed rice mix with tangly tamarind sauce.',
-    image: 'https://images.unsplash.com/photo-1601050690597-df056fb01793?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 4
-  },
-  {
-    id: 'p7',
-    name: 'Masala Dosa',
-    price: 90,
-    category: 'Mains',
-    description: 'Crispy rice crepe filled with spiced potato.',
-    image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 10
-  },
-  {
-    id: 'p8',
-    name: 'Momos',
-    price: 80,
-    category: 'Snacks',
-    description: 'Steamed dumplings served with spicy red chutney.',
-    image: 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 8
-  },
-  {
-    id: 'p9',
-    name: 'Cutting Chai',
-    price: 20,
-    category: 'Drinks',
-    description: 'Strong ginger cardamom tea.',
-    image: 'https://images.unsplash.com/photo-1594631252845-29fc458695d7?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 2
-  },
-  {
-    id: 'p10',
-    name: 'Mango Lassi',
-    price: 70,
-    category: 'Drinks',
-    description: 'Thick yogurt drink with mango pulp.',
-    image: 'https://images.unsplash.com/photo-1546173159-315724a9d86a?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 3
-  },
-  {
-    id: 'p11',
-    name: 'Jalebi',
-    price: 50,
-    category: 'Desserts',
-    description: 'Sweet pretzel-shaped deep-fried batter in syrup.',
-    image: 'https://images.unsplash.com/photo-1589113103503-49673cbbbd63?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 10
-  },
-  {
-    id: 'p12',
-    name: 'Gulab Jamun',
-    price: 40,
-    category: 'Desserts',
-    description: 'Fried milk solids in rose-scented syrup.',
-    image: 'https://images.unsplash.com/photo-1593708602431-77218225ce81?auto=format&fit=crop&q=80&w=300',
-    prepTimeMinutes: 3
-  }
-];
-
-export const STREET_STALL_MENU: MenuItem[] = [
+export const ALL_MENU_ITEMS: MenuItem[] = [
   {
     id: 'm1',
-    name: 'Vada Pav',
-    price: 40,
-    category: 'Snacks',
-    description: 'The iconic Mumbai burger with spicy chutney.',
-    image: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&q=80&w=200',
-    prepTimeMinutes: 5
+    name: 'Maharaja Royal Thali',
+    hindiName: 'महाराजा शाही थाली',
+    price: 550,
+    category: 'Thalis & Combos',
+    station: 'Curry & Gravy',
+    spiceLevel: 'Medium',
+    isVeg: false,
+    isJainAvailable: true,
+    image: '/src/assets/images/hero_indian_thali_1790308878138.jpg',
+    description: 'A lavish feast featuring Butter Chicken, Dal Makhani Bukhara, Shahi Paneer, Jeera Rice, 2 Butter Naans, Raita, Papad, and Warm Gulab Jamun.',
+    prepTimeMinutes: 18,
+    isBestSeller: true,
+    inStock: true
   },
   {
     id: 'm2',
-    name: 'Pani Puri',
-    price: 60,
-    category: 'Snacks',
-    description: 'Crispy hollow puris with tangy herb water.',
-    image: 'https://images.unsplash.com/photo-1601050690597-df056fb01793?auto=format&fit=crop&q=80&w=200',
-    prepTimeMinutes: 3
+    name: 'Royal Hyderabadi Dum Biryani',
+    hindiName: 'शाही हैदराबादी दम बिरयानी',
+    price: 380,
+    category: 'Dum Biryani & Breads',
+    station: 'Biryani & Rice',
+    spiceLevel: 'Teekha',
+    isVeg: false,
+    isJainAvailable: false,
+    image: '/src/assets/images/dish_dum_biryani_1790308889031.jpg',
+    description: 'Long grain aged basmati rice cooked on slow dum with tender marinated chicken, saffron strands, fried golden onions, and secret Lucknowi potli masala.',
+    prepTimeMinutes: 15,
+    isBestSeller: true,
+    inStock: true
   },
   {
     id: 'm3',
-    name: 'Cutting Chai',
-    price: 20,
-    category: 'Drinks',
-    description: 'Strong ginger and cardamom spiced milk tea.',
-    image: 'https://images.unsplash.com/photo-1594631252845-29fc458695d7?auto=format&fit=crop&q=80&w=200',
-    prepTimeMinutes: 2
+    name: 'Old Delhi Butter Chicken',
+    hindiName: 'पुरानी दिल्ली मुर्ग मक्खनी',
+    price: 390,
+    category: 'Rich Curries & Gravies',
+    station: 'Curry & Gravy',
+    spiceLevel: 'Medium',
+    isVeg: false,
+    isJainAvailable: false,
+    image: '/src/assets/images/dish_butter_chicken_1790308901510.jpg',
+    description: 'Charcoal roasted tandoori chicken simmered in a velvety satin gravy of vine-ripened tomatoes, fresh dairy cream, honey, and aromatic roasted kasuri methi.',
+    prepTimeMinutes: 12,
+    isBestSeller: true,
+    inStock: true
+  },
+  {
+    id: 'm4',
+    name: 'Tandoori Paneer Tikka',
+    hindiName: 'तंदूरी पनीर टिक्का',
+    price: 290,
+    category: 'Starters & Kebabs',
+    station: 'Tandoor Oven',
+    spiceLevel: 'Teekha',
+    isVeg: true,
+    isJainAvailable: true,
+    image: '/src/assets/images/dish_paneer_tikka_1790308913698.jpg',
+    description: 'Malai paneer cubes marinated overnight in hung curd, yellow mustard oil, Kashmiri degi mirch, and hand-ground spices, clay-oven roasted to perfection.',
+    prepTimeMinutes: 10,
+    isBestSeller: true,
+    inStock: true
+  },
+  {
+    id: 'm5',
+    name: 'Mumbai Samosa Chaat & Pani Puri',
+    hindiName: 'मुंबई समोसा चाट और पानी पूरी',
+    price: 150,
+    category: 'Street Chaat',
+    station: 'Chaat & Starters',
+    spiceLevel: 'Teekha',
+    isVeg: true,
+    isJainAvailable: true,
+    image: '/src/assets/images/dish_mumbai_chaat_1790308926849.jpg',
+    description: 'Crushed golden samosas layered with spiced ragda chickpeas, sweet saunth chutney, spicy mint coriander water, crunchy nylon sev, and fresh pomegranate.',
+    prepTimeMinutes: 6,
+    isBestSeller: true,
+    inStock: true
+  },
+  {
+    id: 'm6',
+    name: 'Dal Makhani Bukhara (24hr Slow Cooked)',
+    hindiName: 'दाल मखनी बुखारा',
+    price: 320,
+    category: 'Rich Curries & Gravies',
+    station: 'Curry & Gravy',
+    spiceLevel: 'Mild',
+    isVeg: true,
+    isJainAvailable: true,
+    image: '/src/assets/images/hero_indian_thali_1790308878138.jpg',
+    description: 'Whole black urad lentils slow simmered overnight over wood charcoal embers with vine tomatoes, churned white butter, and gentle ginger-fenugreek essence.',
+    prepTimeMinutes: 8,
+    isBestSeller: true,
+    inStock: true
+  },
+  {
+    id: 'm7',
+    name: 'Butter Garlic Naan',
+    hindiName: 'बटर गार्लिक नान',
+    price: 75,
+    category: 'Dum Biryani & Breads',
+    station: 'Tandoor Oven',
+    spiceLevel: 'Mild',
+    isVeg: true,
+    isJainAvailable: false,
+    image: '/src/assets/images/dish_paneer_tikka_1790308913698.jpg',
+    description: 'Clay-oven slapped refined wheat flatbread studded with charred chopped garlic, fresh cilantro, and brushed generously with desi Amul butter.',
+    prepTimeMinutes: 5,
+    isBestSeller: true,
+    inStock: true
+  },
+  {
+    id: 'm8',
+    name: 'Alphonso Mango Lassi',
+    hindiName: 'अल्फ़ांसो मैंगो लस्सी',
+    price: 120,
+    category: 'Beverages & Chai',
+    station: 'Beverages & Desserts',
+    spiceLevel: 'Mild',
+    isVeg: true,
+    isJainAvailable: true,
+    image: '/src/assets/images/hero_indian_thali_1790308878138.jpg',
+    description: 'Chilled thick sweet curd churned with authentic Ratnagiri Alphonso mango pulp, green cardamom powder, and silvered pistachio shavings.',
+    prepTimeMinutes: 4,
+    isBestSeller: true,
+    inStock: true
+  },
+  {
+    id: 'm9',
+    name: 'Kulhad Ginger Masala Chai',
+    hindiName: 'कुल्हड़ अदरक मसाला चाय',
+    price: 60,
+    category: 'Beverages & Chai',
+    station: 'Beverages & Desserts',
+    spiceLevel: 'Medium',
+    isVeg: true,
+    isJainAvailable: true,
+    image: '/src/assets/images/dish_mumbai_chaat_1790308926849.jpg',
+    description: 'Strong Assam CTC tea steeped with freshly pounded ginger, green cardamom, cloves, and whole creamy milk, served in an earthen clay kulhad.',
+    prepTimeMinutes: 4,
+    isBestSeller: false,
+    inStock: true
+  },
+  {
+    id: 'm10',
+    name: 'Warm Gulab Jamun with Rabdi',
+    hindiName: 'गुलाब जामुन रबड़ी के साथ',
+    price: 140,
+    category: 'Desserts & Sweets',
+    station: 'Beverages & Desserts',
+    spiceLevel: 'Mild',
+    isVeg: true,
+    isJainAvailable: true,
+    image: '/src/assets/images/hero_indian_thali_1790308878138.jpg',
+    description: 'Khoya dumplings deep fried to deep amber, soaked in saffron-rose syrup, paired with chilled slow-reduced malai rabdi.',
+    prepTimeMinutes: 5,
+    isBestSeller: false,
+    inStock: true
+  }
+];
+
+export const INITIAL_ORDERS: Order[] = [
+  {
+    id: 'ord-101',
+    orderNumber: 101,
+    customerId: 'c1',
+    customerName: 'Aarav Sharma',
+    customerPhone: '+91 98201 44521',
+    tableNumber: 'Table T-04',
+    orderType: 'Dine-In',
+    items: [
+      { menuItemId: 'm2', name: 'Royal Hyderabadi Dum Biryani', price: 380, quantity: 2, spicePreference: 'Desi Spicy', cookingNote: 'Extra spicy salan & fried onion on side' },
+      { menuItemId: 'm7', name: 'Butter Garlic Naan', price: 75, quantity: 3, cookingNote: 'Well charred & extra butter' },
+      { menuItemId: 'm8', name: 'Alphonso Mango Lassi', price: 120, quantity: 2 }
+    ],
+    subtotal: 1225,
+    gst: 61,
+    totalPrice: 1286,
+    paymentMethod: 'UPI / QR',
+    paymentStatus: 'Paid',
+    timestamp: '19:42',
+    status: 'Preparing',
+    estimatedReadyAt: Date.now() + 10 * 60 * 1000,
+    prepProgress: 65,
+    specialInstructions: 'VIP Table #4 - Prompt service requested for daughter birthday celebration.'
+  },
+  {
+    id: 'ord-102',
+    orderNumber: 102,
+    customerId: 'c2',
+    customerName: 'Priya Patel',
+    customerPhone: '+91 94260 88910',
+    tableNumber: 'Table T-07',
+    orderType: 'Dine-In',
+    items: [
+      { menuItemId: 'm6', name: 'Dal Makhani Bukhara', price: 320, quantity: 1, isJain: true, spicePreference: 'Mild', cookingNote: '100% Strict Jain prep, no onion/garlic' },
+      { menuItemId: 'm4', name: 'Tandoori Paneer Tikka', price: 290, quantity: 1, isJain: true, spicePreference: 'Mild' },
+      { menuItemId: 'm7', name: 'Butter Garlic Naan', price: 75, quantity: 2, isJain: true, cookingNote: 'Substitute plain butter naan (no garlic)' }
+    ],
+    subtotal: 760,
+    gst: 38,
+    totalPrice: 798,
+    paymentMethod: 'Card',
+    paymentStatus: 'Paid',
+    timestamp: '19:50',
+    status: 'Preparing',
+    estimatedReadyAt: Date.now() + 6 * 60 * 1000,
+    prepProgress: 40,
+    specialInstructions: 'Jain guest. Confirm with Curry & Tandoor head chef.'
+  },
+  {
+    id: 'ord-103',
+    orderNumber: 103,
+    customerName: 'Anand Kumar (Walk-in)',
+    customerPhone: '+91 98765 00123',
+    tableNumber: 'Takeaway Counter',
+    orderType: 'Takeaway',
+    items: [
+      { menuItemId: 'm5', name: 'Mumbai Samosa Chaat & Pani Puri', price: 150, quantity: 3, spicePreference: 'Teekha' },
+      { menuItemId: 'm9', name: 'Kulhad Ginger Masala Chai', price: 60, quantity: 3 }
+    ],
+    subtotal: 630,
+    gst: 31,
+    totalPrice: 661,
+    paymentMethod: 'UPI / QR',
+    paymentStatus: 'Paid',
+    timestamp: '19:55',
+    status: 'Pending',
+    estimatedReadyAt: Date.now() + 12 * 60 * 1000,
+    prepProgress: 10,
+    specialInstructions: 'Packing separately in spill-proof takeaway containers.'
   }
 ];

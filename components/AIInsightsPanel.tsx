@@ -1,95 +1,200 @@
-
 import React, { useState, useEffect } from 'react';
-import { Customer } from '../types';
-import { analyzeCustomerTrends } from '../services/geminiService';
-import { BrainCircuit, Lightbulb, RefreshCcw, TrendingUp } from 'lucide-react';
+import { Customer, Order } from '../types';
+import { analyzeCustomerTrends, suggestUpsellCombo } from '../services/geminiService';
+import { 
+  Sparkles, 
+  RefreshCw, 
+  TrendingUp, 
+  Flame, 
+  Award, 
+  ShieldCheck, 
+  ChefHat, 
+  Utensils, 
+  Lightbulb,
+  ArrowRight
+} from 'lucide-react';
 
 interface Props {
   customers: Customer[];
+  orders?: Order[];
+  restaurantName?: string;
 }
 
-const AIInsightsPanel: React.FC<Props> = ({ customers }) => {
+const AIInsightsPanel: React.FC<Props> = ({ 
+  customers, 
+  orders = [], 
+  restaurantName = 'MasalaCraft' 
+}) => {
   const [insights, setInsights] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Pairing tool state
+  const [selectedPairingDish, setSelectedPairingDish] = useState('Royal Hyderabadi Dum Biryani');
+  const [pairingSpice, setPairingSpice] = useState('Medium');
+  const [pairingRecommendation, setPairingRecommendation] = useState<string>('');
+  const [isPairingLoading, setIsPairingLoading] = useState(false);
+
   const performAnalysis = async () => {
     setIsAnalyzing(true);
-    const result = await analyzeCustomerTrends(customers);
+    const result = await analyzeCustomerTrends(customers, orders, restaurantName);
     setInsights(result || '');
     setIsAnalyzing(false);
   };
 
+  const handlePairingSearch = async () => {
+    setIsPairingLoading(true);
+    const result = await suggestUpsellCombo(selectedPairingDish, pairingSpice);
+    setPairingRecommendation(result || '');
+    setIsPairingLoading(false);
+  };
+
   useEffect(() => {
     performAnalysis();
+    handlePairingSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="bg-gradient-to-r from-orange-600 to-red-600 p-8 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden">
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-serif font-bold mb-2">Saffron AI Lab</h2>
-            <p className="opacity-90 max-w-lg">Advanced analytics powered by Gemini. We analyze your guest patterns, spice trends, and spending habits to give you the upper hand.</p>
+    <div className="space-y-8 pb-16 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-amber-950 p-6 lg:p-8 rounded-2xl text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1 flex items-center gap-1.5">
+            <Sparkles size={14} /> AI Culinary & Operations Intelligence
           </div>
-          <BrainCircuit size={80} className="opacity-20 hidden md:block" />
+          <h2 className="text-2xl font-serif font-bold text-stone-100">
+            Saffron AI Consultant for {restaurantName}
+          </h2>
+          <p className="text-xs text-stone-300 mt-1 max-w-xl">
+            Real-time operational analysis evaluating patron spice distributions, high-spend loyalty profiles, Jain catering opportunities, and station turnaround speeds.
+          </p>
         </div>
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <TrendingUp size={200} />
-        </div>
+        <button
+          onClick={performAnalysis}
+          disabled={isAnalyzing}
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-2 self-start md:self-auto shrink-0 disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={isAnalyzing ? 'animate-spin' : ''} />
+          {isAnalyzing ? 'Analyzing Gastronomy...' : 'Re-run AI Analysis'}
+        </button>
       </div>
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-orange-50">
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Lightbulb className="text-yellow-500" />
-            Strategic Recommendations
-          </h3>
-          <button 
-            onClick={performAnalysis}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-orange-600 border border-orange-100 rounded-xl hover:bg-orange-50 transition-all"
-            disabled={isAnalyzing}
-          >
-            <RefreshCcw size={16} className={isAnalyzing ? 'animate-spin' : ''} />
-            Refresh Analysis
-          </button>
+      {/* Main Analysis Card */}
+      <div className="bg-white p-6 lg:p-8 rounded-2xl border border-stone-200/80 shadow-sm space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b border-stone-100">
+          <div className="flex items-center gap-2">
+            <Lightbulb size={20} className="text-amber-600" />
+            <h3 className="font-serif font-bold text-lg text-stone-900">
+              Executive Strategic Recommendations
+            </h3>
+          </div>
+          <span className="text-xs text-stone-400">Model: Gemini 2.5/Flash Latest</span>
         </div>
 
         {isAnalyzing ? (
-          <div className="py-20 flex flex-col items-center justify-center text-gray-400 space-y-4">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-orange-100 border-t-orange-600 rounded-full animate-spin"></div>
-              <BrainCircuit className="absolute inset-0 m-auto text-orange-600" size={24} />
-            </div>
-            <p className="font-medium animate-pulse">Consulting the Saffron AI...</p>
+          <div className="py-20 flex flex-col items-center justify-center space-y-3 text-stone-400">
+            <RefreshCw size={32} className="animate-spin text-amber-600" />
+            <p className="text-xs font-semibold text-stone-700">Synthesizing patron dining telemetry and spice matrix...</p>
           </div>
         ) : (
-          <div className="prose prose-orange max-w-none">
-            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap font-medium bg-orange-50/20 p-6 rounded-2xl border border-orange-50">
-              {insights || "Click refresh to start analyzing your current customer data."}
-            </div>
+          <div className="prose prose-stone max-w-none text-xs sm:text-sm text-stone-700 leading-relaxed whitespace-pre-wrap font-sans bg-stone-50/70 p-6 rounded-xl border border-stone-200">
+            {insights || 'Click "Re-run AI Analysis" to generate actionable insights.'}
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-orange-50 flex gap-4 items-start">
-          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
-            <TrendingUp size={24} />
-          </div>
+      {/* Interactive Waitstaff Dish Pairing Tool */}
+      <div className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-5">
+        <div>
+          <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
+            <Utensils size={18} className="text-amber-600" />
+            Waitstaff Smart Upsell & Pairing Assistant
+          </h3>
+          <p className="text-xs text-stone-500 mt-0.5">
+            Empower table servers to suggest high-margin beverage and bread pairings matching the diner's exact dish and spice level.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <h4 className="font-bold text-gray-800 mb-1">Growth Opportunity</h4>
-            <p className="text-sm text-gray-500">Guests with 'Indian Spicy' preference tend to spend 15% more on appetizers. Consider a spicy tandoori special.</p>
+            <label className="block text-xs font-semibold text-stone-700 mb-1">Diner's Main Dish</label>
+            <select
+              value={selectedPairingDish}
+              onChange={(e) => setSelectedPairingDish(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-800 bg-stone-50 focus:outline-none"
+            >
+              <option value="Royal Hyderabadi Dum Biryani">Royal Hyderabadi Dum Biryani</option>
+              <option value="Old Delhi Butter Chicken">Old Delhi Butter Chicken</option>
+              <option value="Dal Makhani Bukhara">Dal Makhani Bukhara</option>
+              <option value="Tandoori Paneer Tikka">Tandoori Paneer Tikka</option>
+              <option value="Mumbai Samosa Chaat">Mumbai Samosa Chaat</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-stone-700 mb-1">Diner's Spice Level</label>
+            <select
+              value={pairingSpice}
+              onChange={(e) => setPairingSpice(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-800 bg-stone-50 focus:outline-none"
+            >
+              <option value="Mild">Mild</option>
+              <option value="Medium">Medium</option>
+              <option value="Teekha">Teekha (Hot)</option>
+              <option value="Desi Spicy">Desi Spicy</option>
+            </select>
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={handlePairingSearch}
+              disabled={isPairingLoading}
+              className="w-full py-2 bg-stone-900 hover:bg-stone-800 text-stone-100 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+            >
+              {isPairingLoading ? <RefreshCw className="animate-spin" size={14} /> : <Sparkles size={14} />}
+              Generate Table Upsell Suggestion
+            </button>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-orange-50 flex gap-4 items-start">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <TrendingUp size={24} />
+
+        {pairingRecommendation && (
+          <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200 text-xs text-stone-800 whitespace-pre-wrap font-medium leading-relaxed">
+            <strong className="text-amber-950 block mb-1">Recommended Table Pairings:</strong>
+            {pairingRecommendation}
           </div>
-          <div>
-            <h4 className="font-bold text-gray-800 mb-1">Churn Prevention</h4>
-            <p className="text-sm text-gray-500">4 regular guests haven't visited in over 30 days. Gemini recommends a 'We miss you' campaign with a Free Naan coupon.</p>
+        )}
+      </div>
+
+      {/* Static Key Domain Indicators */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="p-5 rounded-2xl bg-white border border-stone-200/80 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-800">
+            <Flame size={16} className="text-amber-600" />
+            High-Spice Retention
           </div>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Patrons preferring <strong>Teekha</strong> and <strong>Desi Spicy</strong> re-order within 12 days on average, yielding 28% higher LTV than mild diners.
+          </p>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-stone-200/80 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
+            <ShieldCheck size={16} className="text-emerald-600" />
+            Jain & Pure Veg Lift
+          </div>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Promoting dedicated Jain cooking pans and Sattvic gravies brings larger family dining parties (avg. 6.8 guests vs. 3.2 walk-ins).
+          </p>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-stone-200/80 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-blue-800">
+            <ChefHat size={16} className="text-blue-600" />
+            Tandoor & Dum Pre-baking
+          </div>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Pre-portioning aged Hyderabadi basmati handis at 19:15 cuts Saturday night kitchen wait times by 8.4 minutes per table.
+          </p>
         </div>
       </div>
     </div>

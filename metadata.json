@@ -1,7 +1,8 @@
 {
-  "name": "Copy of Street Stall CRM",
-  "description": "Street Smart CRM for modern Indian eateries. Includes guest insights, automated campaigns, and a scan-to-order system for customers.",
+  "name": "MasalaCraft - Indian Restaurant CRM & KDS",
+  "description": "Comprehensive Indian Restaurant CRM & Kitchen Display System with guest spice profiling, Jain & dietary tags, WhatsApp festival marketing, table reservations, live KDS by station, and digital QR ordering.",
   "requestFramePermissions": [
     "camera"
-  ]
+  ],
+  "majorCapabilities": []
 }

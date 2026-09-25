@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
-import { Customer, SpiceLevel, HistoricalOrder } from '../types';
+import { Customer, SpiceLevel, CustomerTier, DietaryTag } from '../types';
 import { 
   Search, 
   Plus, 
   Filter, 
-  MoreVertical, 
   Mail, 
   Phone, 
   Flame, 
@@ -13,83 +11,127 @@ import {
   User, 
   Heart, 
   AlertCircle,
-  ShieldAlert,
-  Zap,
   ChevronDown,
   ChevronUp,
   IndianRupee,
-  Terminal,
-  Activity
+  Calendar,
+  MessageSquare,
+  ShieldCheck,
+  CheckCircle2,
+  Copy
 } from 'lucide-react';
 
 interface Props {
   customers: Customer[];
   onUpdate: (customers: Customer[]) => void;
+  onBookReservationForGuest?: (customer: Customer) => void;
 }
 
-const CustomerManagement: React.FC<Props> = ({ customers, onUpdate }) => {
+const CustomerManagement: React.FC<Props> = ({ 
+  customers, 
+  onUpdate,
+  onBookReservationForGuest 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTier, setSelectedTier] = useState<string>('all');
+  const [selectedDietary, setSelectedDietary] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
-  
+  const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
+
   // New Guest Form State
   const [newGuest, setNewGuest] = useState({
     name: '',
     email: '',
     phone: '',
     spicePreference: 'Medium' as SpiceLevel,
-    dietaryRestrictions: '',
+    dietaryTags: [] as DietaryTag[],
+    tier: 'Silver' as CustomerTier,
     favoriteDish: '',
+    familyNotes: '',
+    initialSpend: 0
   });
 
-  const filtered = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phone.includes(searchTerm)
-  );
+  const availableDietaryTags: DietaryTag[] = [
+    'Pure Veg',
+    'Jain (No Onion/Garlic)',
+    'Non-Veg',
+    'Halal',
+    'Gluten-Free',
+    'Nut Allergy',
+    'Eggless'
+  ];
 
-  const getSpiceBadge = (level: SpiceLevel) => {
-    switch (level) {
-      case 'Mild': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Medium': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'Hot': return 'bg-red-100 text-red-700 border-red-200';
-      case 'Indian Spicy': return 'bg-orange-600 text-white border-orange-700 shadow-lg shadow-orange-100';
-    }
+  const filteredCustomers = customers.filter(c => {
+    const matchesSearch = 
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.phone.includes(searchTerm) ||
+      c.favoriteDish.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesTier = selectedTier === 'all' || c.tier === selectedTier;
+    const matchesDietary = selectedDietary === 'all' || c.dietaryTags.some(t => t.includes(selectedDietary));
+
+    return matchesSearch && matchesTier && matchesDietary;
+  });
+
+  const handleCopyPhone = (phone: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(phone);
+    setCopiedPhone(phone);
+    setTimeout(() => setCopiedPhone(null), 2000);
   };
 
-  const getStatusStyle = (status: HistoricalOrder['status']) => {
-    switch (status) {
-      case 'Completed': return 'text-green-600 bg-green-50 border-green-100';
-      case 'Cancelled': return 'text-red-600 bg-red-50 border-red-100';
-      case 'Refunded': return 'text-blue-600 bg-blue-50 border-blue-100';
-    }
+  const handleToggleDietaryTag = (tag: DietaryTag) => {
+    setNewGuest(prev => ({
+      ...prev,
+      dietaryTags: prev.dietaryTags.includes(tag)
+        ? prev.dietaryTags.filter(t => t !== tag)
+        : [...prev.dietaryTags, tag]
+    }));
   };
 
   const handleAddGuest = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newGuest.name || !newGuest.phone) return;
+
     const guestToAdd: Customer = {
-      id: Date.now().toString(),
+      id: `c_${Date.now()}`,
       name: newGuest.name,
-      email: newGuest.email,
+      email: newGuest.email || `${newGuest.name.toLowerCase().replace(/\s+/g, '.')}@guest.in`,
       phone: newGuest.phone,
       spicePreference: newGuest.spicePreference,
-      dietaryRestrictions: newGuest.dietaryRestrictions.split(',').map(s => s.trim()).filter(s => s),
-      loyaltyPoints: 0,
-      lastOrder: 'None',
-      totalSpend: 0,
-      visitCount: 0,
-      favoriteDish: newGuest.favoriteDish || 'None',
-      orderHistory: []
+      dietaryTags: newGuest.dietaryTags,
+      tier: newGuest.tier,
+      loyaltyPoints: Math.round(newGuest.initialSpend * 0.1),
+      lastOrder: newGuest.favoriteDish || 'New Registration',
+      totalSpend: Number(newGuest.initialSpend) || 0,
+      visitCount: newGuest.initialSpend > 0 ? 1 : 0,
+      favoriteDish: newGuest.favoriteDish || 'Chef Special Thali',
+      familyNotes: newGuest.familyNotes,
+      churnRisk: 'Low',
+      orderHistory: newGuest.initialSpend > 0 ? [
+        {
+          id: `h_${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          total: Number(newGuest.initialSpend),
+          status: 'Completed',
+          dishes: newGuest.favoriteDish || 'Initial dining visit'
+        }
+      ] : []
     };
 
-    onUpdate([...customers, guestToAdd]);
+    onUpdate([guestToAdd, ...customers]);
     setShowAddModal(false);
     setNewGuest({
       name: '',
       email: '',
       phone: '',
       spicePreference: 'Medium',
-      dietaryRestrictions: '',
+      dietaryTags: [],
+      tier: 'Silver',
       favoriteDish: '',
+      familyNotes: '',
+      initialSpend: 0
     });
   };
 
@@ -98,301 +140,367 @@ const CustomerManagement: React.FC<Props> = ({ customers, onUpdate }) => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Action Bar */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="relative w-full md:w-96 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-600 transition-colors" size={18} />
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Search & Filter Header */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm">
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
           <input 
             type="text" 
-            placeholder="Scan for Guest ID or search..."
-            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 focus:outline-none bg-white shadow-sm transition-all"
+            placeholder="Search by patron name, phone, or dish..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-sm transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-4 w-full md:w-auto">
-          <button className="flex items-center gap-2 px-6 py-4 rounded-2xl border-2 border-orange-50 hover:bg-orange-50 transition-colors bg-white font-black text-xs uppercase tracking-widest text-gray-500">
-            <Filter size={18} /> Filters
-          </button>
+
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          {/* Tier Filter */}
+          <select 
+            value={selectedTier}
+            onChange={(e) => setSelectedTier(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-stone-50 focus:outline-none focus:border-amber-500"
+          >
+            <option value="all">All Tiers</option>
+            <option value="Maharaja VIP">Maharaja VIP</option>
+            <option value="Gold">Gold</option>
+            <option value="Silver">Silver</option>
+          </select>
+
+          {/* Dietary Filter */}
+          <select 
+            value={selectedDietary}
+            onChange={(e) => setSelectedDietary(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-stone-50 focus:outline-none focus:border-amber-500"
+          >
+            <option value="all">All Dietary Preferences</option>
+            <option value="Pure Veg">Pure Veg</option>
+            <option value="Jain">Jain Friendly</option>
+            <option value="Non-Veg">Non-Veg</option>
+            <option value="Halal">Halal</option>
+          </select>
+
           <button 
             onClick={() => setShowAddModal(true)}
-            className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-orange-600 text-white font-black text-xs uppercase tracking-widest hover:bg-orange-700 transition-all shadow-xl shadow-orange-100 active:scale-95"
+            className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-all shadow-sm flex items-center gap-1.5"
           >
-            <Plus size={18} /> Add New Link
+            <Plus size={16} /> Add New Patron
           </button>
         </div>
       </div>
 
       {/* Guest Table */}
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-orange-50 overflow-hidden relative">
-        <div className="absolute inset-0 opacity-[0.01] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ea580c 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-        
+      <div className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="bg-orange-50/20 text-[10px] font-black text-orange-900/50 uppercase tracking-[0.2em]">
-                <th className="px-8 py-6 border-b border-orange-50 w-10"></th>
-                <th className="px-8 py-6 border-b border-orange-50">Neural Information</th>
-                <th className="px-8 py-6 border-b border-orange-50">Flavor Profile</th>
-                <th className="px-8 py-6 border-b border-orange-50">Transmission History</th>
-                <th className="px-8 py-6 border-b border-orange-50">Loyalty Sync</th>
-                <th className="px-8 py-6 border-b border-orange-50 text-right">Actions</th>
+              <tr className="bg-stone-50/80 text-xs font-semibold text-stone-600 border-b border-stone-200">
+                <th className="px-5 py-3.5 w-8"></th>
+                <th className="px-5 py-3.5">Guest & Contact</th>
+                <th className="px-5 py-3.5">Spice & Dietary Profile</th>
+                <th className="px-5 py-3.5">Tier & Loyalty</th>
+                <th className="px-5 py-3.5">Favorite Indian Dish</th>
+                <th className="px-5 py-3.5 text-right">Lifetime Spend</th>
+                <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-orange-50">
-              {filtered.map(c => (
-                <React.Fragment key={c.id}>
-                  <tr 
-                    onClick={() => toggleExpand(c.id)}
-                    className={`transition-all group cursor-pointer ${expandedCustomerId === c.id ? 'bg-orange-50/50' : 'hover:bg-orange-50/30'}`}
-                  >
-                    <td className="px-8 py-6">
-                      {expandedCustomerId === c.id ? (
-                        <ChevronUp size={20} className="text-orange-600" />
-                      ) : (
-                        <ChevronDown size={20} className="text-gray-300 group-hover:text-orange-600 transition-colors" />
-                      )}
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col">
-                        <div className="font-black text-gray-900 text-base tracking-tight">{c.name}</div>
-                        <div className="flex flex-col gap-1 mt-1.5">
-                          <div className="flex items-center text-[10px] font-bold text-gray-400"><Mail size={12} className="mr-2 opacity-50" /> {c.email}</div>
-                          <div className="flex items-center text-[10px] font-bold text-gray-400"><Phone size={12} className="mr-2 opacity-50" /> {c.phone}</div>
-                        </div>
-                        
-                        {/* Dietary Restrictions - Clearly Displayed Badges */}
-                        {c.dietaryRestrictions.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-3">
-                            {c.dietaryRestrictions.map((restriction, idx) => (
-                              <span key={idx} className="px-2.5 py-1 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest border border-red-100 rounded-lg flex items-center gap-1.5 shadow-sm">
-                                <ShieldAlert size={10} /> {restriction}
-                              </span>
-                            ))}
-                          </div>
+            <tbody className="divide-y divide-stone-100">
+              {filteredCustomers.map(customer => {
+                const isExpanded = expandedCustomerId === customer.id;
+                return (
+                  <React.Fragment key={customer.id}>
+                    <tr 
+                      onClick={() => toggleExpand(customer.id)}
+                      className={`cursor-pointer transition-colors ${
+                        isExpanded ? 'bg-amber-50/30' : 'hover:bg-stone-50/60'
+                      }`}
+                    >
+                      <td className="px-5 py-4 text-stone-400">
+                        {isExpanded ? (
+                          <ChevronUp size={16} className="text-amber-600" />
+                        ) : (
+                          <ChevronDown size={16} />
                         )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest gap-2 border ${getSpiceBadge(c.spicePreference)}`}>
-                        <Flame size={12} />
-                        {c.spicePreference}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col">
-                        <div className="text-gray-900 font-black text-sm flex items-center gap-2">
-                          <Heart size={14} className="text-pink-500 fill-pink-500" />
-                          {c.favoriteDish}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-bold text-stone-900 leading-tight">{customer.name}</div>
+                        <div className="text-xs text-stone-500 mt-1 flex items-center gap-2">
+                          <span className="font-mono text-stone-600">{customer.phone}</span>
+                          <button 
+                            onClick={(e) => handleCopyPhone(customer.phone, e)} 
+                            className="text-stone-400 hover:text-amber-600" 
+                            title="Copy Phone"
+                          >
+                            {copiedPhone === customer.phone ? <CheckCircle2 size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                          </button>
+                          <span>·</span>
+                          <span className="text-stone-400 truncate max-w-[150px]">{customer.email}</span>
                         </div>
-                        <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">{c.visitCount} visits • <span className="text-gray-900">₹{c.totalSpend.toLocaleString()}</span></div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col gap-2">
-                        <div className="w-24 h-2 bg-orange-100/50 rounded-full overflow-hidden border border-orange-100">
-                          <div className="h-full bg-orange-600 shadow-[0_0_10px_rgba(234,88,12,0.5)]" style={{ width: `${Math.min((c.loyaltyPoints / 2500) * 100, 100)}%` }} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                          <Flame size={13} className="text-amber-600 shrink-0" />
+                          <span>{customer.spicePreference}</span>
                         </div>
-                        <span className="text-xs font-black text-orange-900 flex items-center gap-1.5 uppercase tracking-tighter">
-                          <Zap size={10} className="fill-orange-600 text-orange-600" />
-                          {c.loyaltyPoints} pts
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <button className="text-gray-300 hover:text-orange-600 transition-colors p-2 rounded-xl hover:bg-orange-50">
-                        <MoreVertical size={20} />
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  {/* Expanded Row: Last 5 Orders (Neural Log) */}
-                  {expandedCustomerId === c.id && (
-                    <tr className="bg-orange-50/20 animate-in slide-in-from-top-2 duration-300">
-                      <td colSpan={6} className="px-8 py-10">
-                        <div className="bg-white rounded-[2rem] border border-orange-100 p-8 shadow-inner relative overflow-hidden">
-                          <div className="absolute top-0 right-0 p-8 opacity-5">
-                            <Activity size={120} />
-                          </div>
-                          
-                          <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2.5 bg-gray-900 text-white rounded-xl shadow-lg">
-                              <Terminal size={18} />
-                            </div>
-                            <div>
-                              <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">Neural Log: Last 5 Transmissions</h4>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Historical Guest Interaction Records</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            {c.orderHistory && c.orderHistory.length > 0 ? (
-                              c.orderHistory.slice(0, 5).map((order) => (
-                                <div key={order.id} className="grid grid-cols-3 items-center px-6 py-4 rounded-2xl bg-orange-50/30 border border-orange-100 hover:border-orange-200 transition-all group/order">
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
-                                    <span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{order.date}</span>
-                                  </div>
-                                  <div className="flex items-center justify-center font-black text-gray-900 text-sm tracking-tight tabular-nums">
-                                    <IndianRupee size={12} className="mr-1 text-orange-600" />
-                                    {order.total}
-                                  </div>
-                                  <div className="flex justify-end">
-                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(order.status)} shadow-sm`}>
-                                      {order.status}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-orange-100 rounded-[2rem]">
-                                <AlertCircle className="text-orange-200 mb-2" size={32} />
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No previous transmission logs found</p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="mt-8 pt-6 border-t border-orange-50 flex justify-between items-center">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-orange-600">
-                              <Zap size={12} className="fill-orange-600" />
-                              Stall Sync: Active
-                            </div>
-                            <button className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-orange-600 transition-colors flex items-center gap-1.5 underline decoration-orange-100 underline-offset-4">
-                              View Full Protocol Data
-                            </button>
-                          </div>
+                        <div className="text-xs text-stone-500 mt-1">
+                          {customer.dietaryTags.length > 0 ? (
+                            customer.dietaryTags.map((tag, idx) => (
+                              <span key={idx}>
+                                {idx > 0 && ' · '}
+                                <span className={tag.includes('Jain') ? 'text-emerald-700 font-semibold' : ''}>{tag}</span>
+                              </span>
+                            ))
+                          ) : (
+                            <span>Standard Menu</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full ${
+                            customer.tier === 'Maharaja VIP' ? 'bg-amber-500' :
+                            customer.tier === 'Gold' ? 'bg-yellow-500' : 'bg-stone-400'
+                          }`}></span>
+                          {customer.tier}
+                        </div>
+                        <div className="text-xs text-stone-500 font-mono tabular-nums mt-0.5">
+                          {customer.loyaltyPoints} points · {customer.visitCount} visits
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-semibold text-stone-800 flex items-center gap-1.5">
+                          <Heart size={13} className="text-rose-500 shrink-0" />
+                          <span className="truncate max-w-[160px]">{customer.favoriteDish}</span>
+                        </div>
+                        <div className="text-xs text-stone-400 truncate max-w-[160px] mt-0.5">
+                          Last: {customer.lastOrder}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="font-bold font-mono text-stone-900 tabular-nums">
+                          ₹{customer.totalSpend.toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-xs text-stone-500">
+                          ₹{customer.visitCount > 0 ? Math.round(customer.totalSpend / customer.visitCount) : 0} avg/visit
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <a 
+                            href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Namaste ${customer.name}, greeting from the team! We are pleased to welcome you for dinner tonight.`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Chat on WhatsApp"
+                          >
+                            <MessageSquare size={16} />
+                          </a>
                         </div>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
+
+                    {/* Expanded Detail Panel */}
+                    {isExpanded && (
+                      <tr className="bg-stone-50/50">
+                        <td colSpan={7} className="px-8 py-6 border-y border-stone-200">
+                          <div className="space-y-5">
+                            {/* Family & Dining Notes */}
+                            {customer.familyNotes && (
+                              <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200 text-stone-800 text-xs leading-relaxed">
+                                <span className="font-bold text-amber-900 uppercase tracking-wide mr-2">Patron Dining Notes:</span>
+                                {customer.familyNotes}
+                              </div>
+                            )}
+
+                            {/* Order History */}
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                  Recent Dining Visits & Invoices ({customer.orderHistory?.length || 0})
+                                </h4>
+                                <span className="text-xs text-stone-500">
+                                  Churn Risk Status: <strong className={customer.churnRisk === 'High' ? 'text-rose-600' : 'text-emerald-600'}>{customer.churnRisk || 'Low'}</strong>
+                                </span>
+                              </div>
+
+                              <div className="space-y-2">
+                                {customer.orderHistory && customer.orderHistory.length > 0 ? (
+                                  customer.orderHistory.map(order => (
+                                    <div key={order.id} className="p-3 bg-white rounded-xl border border-stone-200 flex items-center justify-between text-xs">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-mono text-stone-500 font-semibold">{order.date}</span>
+                                        <span className="text-stone-700 font-medium">{order.dishes || 'Indian Dinner Feast'}</span>
+                                      </div>
+                                      <div className="flex items-center gap-4">
+                                        <span className="font-bold font-mono text-stone-900 tabular-nums">₹{order.total}</span>
+                                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700">
+                                          {order.status}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-xs text-stone-400 py-3 text-center bg-white rounded-xl border border-stone-200">
+                                    No prior dining records found.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
-        {filtered.length === 0 && (
-          <div className="py-24 text-center">
-            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-200">
-              <Search size={32} />
-            </div>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No guest matches found in the network</p>
+
+        {filteredCustomers.length === 0 && (
+          <div className="py-16 text-center text-stone-400 text-sm">
+            No patrons found matching your search and filter criteria.
           </div>
         )}
       </div>
 
-      {/* Add Guest Modal */}
+      {/* Add New Guest Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
-          <div 
-            className="absolute inset-0 bg-neutral-900/60 backdrop-blur-md animate-in fade-in duration-300"
-            onClick={() => setShowAddModal(false)}
-          />
-          <div className="relative bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border-4 border-orange-600">
-            <div className="bg-gray-900 px-8 py-6 flex justify-between items-center text-white relative">
-              <div className="absolute top-0 inset-x-0 h-1 bg-orange-600"></div>
-              <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
-                <div className="p-2 bg-orange-600 rounded-xl">
-                  <User size={20} />
-                </div>
-                Inject New Guest Link
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
+              <h3 className="font-serif font-bold text-lg text-stone-900">Add New Guest Profile</h3>
               <button 
                 onClick={() => setShowAddModal(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                className="text-stone-400 hover:text-stone-600 p-1"
               >
-                <X size={24} />
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleAddGuest} className="p-10 space-y-8 bg-[#fffdfa]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Protocol Identity (Full Name) *</label>
-                  <input 
-                    required
-                    type="text"
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 outline-none bg-orange-50/20 font-bold transition-all"
-                    placeholder="e.g. Rahul Verma"
-                    value={newGuest.name}
-                    onChange={e => setNewGuest({...newGuest, name: e.target.value})}
-                  />
-                </div>
+            <form onSubmit={handleAddGuest} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Full Name *</label>
+                <input 
+                  required
+                  type="text"
+                  placeholder="e.g. Sanjay Verma"
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none"
+                  value={newGuest.name}
+                  onChange={(e) => setNewGuest({ ...newGuest, name: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Comms Channel (Email)</label>
-                  <input 
-                    type="email"
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 outline-none bg-orange-50/20 font-bold transition-all"
-                    placeholder="name@example.com"
-                    value={newGuest.email}
-                    onChange={e => setNewGuest({...newGuest, email: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Signal Line (Phone) *</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">Phone / WhatsApp *</label>
                   <input 
                     required
                     type="tel"
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 outline-none bg-orange-50/20 font-bold transition-all"
-                    placeholder="+91 XXXXX XXXXX"
+                    placeholder="+91 98765 43210"
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none font-mono"
                     value={newGuest.phone}
-                    onChange={e => setNewGuest({...newGuest, phone: e.target.value})}
+                    onChange={(e) => setNewGuest({ ...newGuest, phone: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Flavor Calibration</label>
-                  <select 
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 outline-none bg-orange-50/20 font-bold transition-all appearance-none cursor-pointer"
-                    value={newGuest.spicePreference}
-                    onChange={e => setNewGuest({...newGuest, spicePreference: e.target.value as SpiceLevel})}
-                  >
-                    <option value="Mild">Mild</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hot">Hot</option>
-                    <option value="Indian Spicy">Indian Spicy</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Target Dish</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">Email Address</label>
                   <input 
-                    type="text"
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 outline-none bg-orange-50/20 font-bold transition-all"
-                    placeholder="e.g. Butter Chicken"
-                    value={newGuest.favoriteDish}
-                    onChange={e => setNewGuest({...newGuest, favoriteDish: e.target.value})}
+                    type="email"
+                    placeholder="guest@example.com"
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none"
+                    value={newGuest.email}
+                    onChange={(e) => setNewGuest({ ...newGuest, email: e.target.value })}
                   />
-                </div>
-                
-                {/* Dietary Restrictions Input - Accepts Comma Separated Values */}
-                <div className="md:col-span-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Neural Safety Protocols (Dietary Restrictions)</label>
-                    <span className="text-[8px] font-black text-orange-600 uppercase bg-orange-50 px-2 py-0.5 rounded border border-orange-100">Comma Separated</span>
-                  </div>
-                  <textarea 
-                    rows={2}
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-orange-50 focus:border-orange-500 outline-none bg-orange-50/20 font-bold transition-all resize-none"
-                    placeholder="e.g. No Nuts, Vegan, Gluten-Free"
-                    value={newGuest.dietaryRestrictions}
-                    onChange={e => setNewGuest({...newGuest, dietaryRestrictions: e.target.value})}
-                  />
-                  <p className="text-[9px] text-gray-400 font-bold mt-2 italic">* Stored as individual searchable safety tags.</p>
                 </div>
               </div>
 
-              <div className="pt-6 flex gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">Spice Preference</label>
+                  <select 
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none"
+                    value={newGuest.spicePreference}
+                    onChange={(e) => setNewGuest({ ...newGuest, spicePreference: e.target.value as SpiceLevel })}
+                  >
+                    <option value="Mild">Mild</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Teekha">Teekha (Hot)</option>
+                    <option value="Desi Spicy">Desi Spicy (Extra Mirchi)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">Patron Tier</label>
+                  <select 
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none"
+                    value={newGuest.tier}
+                    onChange={(e) => setNewGuest({ ...newGuest, tier: e.target.value as CustomerTier })}
+                  >
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Maharaja VIP">Maharaja VIP</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1.5">Dietary & Cultural Preferences</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {availableDietaryTags.map(tag => {
+                    const isSelected = newGuest.dietaryTags.includes(tag);
+                    return (
+                      <button
+                        type="button"
+                        key={tag}
+                        onClick={() => handleToggleDietaryTag(tag)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                          isSelected 
+                            ? 'bg-amber-600 text-white border-amber-600' 
+                            : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Favorite Dish</label>
+                <input 
+                  type="text"
+                  placeholder="e.g. Royal Hyderabadi Dum Biryani"
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none"
+                  value={newGuest.favoriteDish}
+                  onChange={(e) => setNewGuest({ ...newGuest, favoriteDish: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Family & Hospitality Notes</label>
+                <textarea 
+                  rows={2}
+                  placeholder="e.g. Celebrating Anniversary on Oct 14, prefers corner table, strict Jain utensils requested"
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-sm focus:border-amber-500 focus:outline-none"
+                  value={newGuest.familyNotes}
+                  onChange={(e) => setNewGuest({ ...newGuest, familyNotes: e.target.value })}
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2.5">
                 <button 
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-5 border-2 border-orange-100 text-orange-700 font-black uppercase text-xs tracking-widest rounded-[1.5rem] hover:bg-orange-50 transition-colors"
+                  className="px-4 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-50"
                 >
-                  Abort
+                  Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-5 bg-orange-600 text-white font-black uppercase text-xs tracking-widest rounded-[1.5rem] hover:bg-orange-700 transition-all shadow-xl shadow-orange-100 active:scale-95"
+                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-all shadow-sm"
                 >
-                  Commit Link
+                  Save Guest Profile
                 </button>
               </div>
             </form>

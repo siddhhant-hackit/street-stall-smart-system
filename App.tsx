@@ -1,23 +1,23 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Calendar, 
   LayoutDashboard, 
   Megaphone, 
   Sparkles, 
-  LogOut, 
-  Award,
-  Utensils,
-  Smartphone,
-  ClipboardList,
-  QrCode,
-  ListTodo,
+  Utensils, 
+  ClipboardList, 
+  QrCode, 
+  ListTodo, 
   Settings as SettingsIcon,
-  HelpCircle
+  ChefHat,
+  MessageSquare,
+  Smartphone,
+  Flame,
+  Plus
 } from 'lucide-react';
 import { ViewState, Customer, Reservation, Order, MenuItem } from './types';
-import { INITIAL_CUSTOMERS, INITIAL_RESERVATIONS, STREET_STALL_MENU } from './constants';
+import { INITIAL_CUSTOMERS, INITIAL_RESERVATIONS, INITIAL_ORDERS, ALL_MENU_ITEMS } from './constants';
 import Dashboard from './components/Dashboard';
 import CustomerManagement from './components/CustomerManagement';
 import ReservationManagement from './components/ReservationManagement';
@@ -32,65 +32,26 @@ import Settings from './components/Settings';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
-  const [restaurantName, setRestaurantName] = useState('Street Stall');
+  const [restaurantName, setRestaurantName] = useState('MasalaCraft');
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
   const [reservations, setReservations] = useState<Reservation[]>(INITIAL_RESERVATIONS);
-  const [liveOrders, setLiveOrders] = useState<Order[]>([]);
-  const [menu, setMenu] = useState<MenuItem[]>(STREET_STALL_MENU);
+  const [liveOrders, setLiveOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [menu, setMenu] = useState<MenuItem[]>(ALL_MENU_ITEMS);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Dynamic Background Pulse Logic
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const atmosphere = useMemo(() => {
-    const hour = currentTime.getHours();
-    if (hour >= 5 && hour < 10) return {
-      name: 'MORNING_SAFFRON',
-      bg: '#fff9f2',
-      accent1: 'rgba(255, 165, 0, 0.08)',
-      accent2: 'rgba(255, 99, 71, 0.05)',
-      label: 'Saffron Dawn'
-    };
-    if (hour >= 10 && hour < 16) return {
-      name: 'MIDDAY_SOLAR',
-      bg: '#f8fbff',
-      accent1: 'rgba(56, 189, 248, 0.06)',
-      accent2: 'rgba(234, 88, 12, 0.04)',
-      label: 'Solar Peak'
-    };
-    if (hour >= 16 && hour < 20) return {
-      name: 'EVENING_AMBER',
-      bg: '#fff7ed',
-      accent1: 'rgba(251, 146, 60, 0.08)',
-      accent2: 'rgba(244, 63, 94, 0.06)',
-      label: 'Amber Dusk'
-    };
-    return {
-      name: 'NIGHT_NEON',
-      bg: '#fcfcfc', // Keeping it light for readability, but shifting accents
-      accent1: 'rgba(124, 58, 237, 0.06)',
-      accent2: 'rgba(234, 88, 12, 0.08)',
-      label: 'Neon Night'
-    };
-  }, [currentTime]);
-
-  // Simulation: Auto-increment prep progress for active orders
+  // Auto-increment prep progress for active orders in kitchen
   useEffect(() => {
     const timer = setInterval(() => {
       setLiveOrders(currentOrders => 
         currentOrders.map(order => {
           if (order.status === 'Preparing') {
-            const newProgress = Math.min((order.prepProgress || 0) + 1, 99);
-            return { ...order, prepProgress: newProgress };
+            const nextProgress = Math.min((order.prepProgress || 0) + 2, 95);
+            return { ...order, prepProgress: nextProgress };
           }
           return order;
         })
       );
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
 
@@ -102,21 +63,38 @@ const App: React.FC = () => {
     setLiveOrders(updatedOrders);
   };
 
-  const NavItem: React.FC<{ view: ViewState; icon: React.ReactNode; label: string; customColor?: string }> = ({ view, icon, label, customColor }) => (
-    <button
-      onClick={() => setActiveView(view)}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
-        activeView === view 
-          ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(234,88,12,0.4)] translate-x-1' 
-          : `${customColor || 'text-gray-500'} hover:bg-orange-50 hover:text-orange-700`
-      }`}
-    >
-      <div className={`${activeView === view ? 'text-white' : 'text-gray-400 group-hover:text-orange-600'} transition-colors`}>
-        {icon}
-      </div>
-      <span className="font-bold tracking-tight text-sm">{label}</span>
-    </button>
-  );
+  const NavItem: React.FC<{ 
+    view: ViewState; 
+    icon: React.ReactNode; 
+    label: string; 
+    badgeCount?: number 
+  }> = ({ view, icon, label, badgeCount }) => {
+    const isActive = activeView === view;
+    return (
+      <button
+        onClick={() => setActiveView(view)}
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-xs font-semibold ${
+          isActive 
+            ? 'bg-amber-600 text-white shadow-sm' 
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+        }`}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className={isActive ? 'text-white' : 'text-stone-400'}>
+            {icon}
+          </div>
+          <span>{label}</span>
+        </div>
+        {badgeCount !== undefined && badgeCount > 0 && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            isActive ? 'bg-amber-700 text-amber-100' : 'bg-amber-100 text-amber-800'
+          }`}>
+            {badgeCount}
+          </span>
+        )}
+      </button>
+    );
+  };
 
   if (activeView === 'qr-menu') {
     return (
@@ -133,7 +111,16 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return <Dashboard restaurantName={restaurantName} customers={customers} reservations={reservations} onNavigate={setActiveView} />;
+        return (
+          <Dashboard 
+            restaurantName={restaurantName} 
+            customers={customers} 
+            reservations={reservations} 
+            orders={liveOrders}
+            menu={menu}
+            onNavigate={setActiveView} 
+          />
+        );
       case 'customers':
         return <CustomerManagement customers={customers} onUpdate={setCustomers} />;
       case 'reservations':
@@ -141,7 +128,7 @@ const App: React.FC = () => {
       case 'marketing':
         return <MarketingCenter customers={customers} />;
       case 'insights':
-        return <AIInsightsPanel customers={customers} />;
+        return <AIInsightsPanel customers={customers} orders={liveOrders} restaurantName={restaurantName} />;
       case 'live-orders':
         return <LiveOrders orders={liveOrders} onUpdate={handleUpdateOrders} menu={menu} customers={customers} />;
       case 'menu-manager':
@@ -151,120 +138,164 @@ const App: React.FC = () => {
       case 'settings':
         return <Settings restaurantName={restaurantName} setRestaurantName={setRestaurantName} />;
       default:
-        return <Dashboard restaurantName={restaurantName} customers={customers} reservations={reservations} onNavigate={setActiveView} />;
+        return (
+          <Dashboard 
+            restaurantName={restaurantName} 
+            customers={customers} 
+            reservations={reservations} 
+            orders={liveOrders}
+            menu={menu}
+            onNavigate={setActiveView} 
+          />
+        );
     }
   };
 
+  const pendingOrderCount = liveOrders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length;
+  const pendingReservationCount = reservations.filter(r => r.status === 'Pending').length;
+
   return (
-    <div 
-      className="flex h-screen transition-colors duration-1000 ease-in-out text-gray-900 selection:bg-orange-100 selection:text-orange-900"
-      style={{ backgroundColor: atmosphere.bg }}
-    >
-      {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-orange-100 flex flex-col h-full sticky top-0 shadow-xl shadow-orange-900/5 z-20">
-        <div className="p-8 border-b border-orange-50 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-orange-50 rounded-full blur-2xl opacity-50 group-hover:bg-orange-100 transition-colors"></div>
-          <div className="flex items-center space-x-3 relative z-10">
-            <div className="bg-orange-600 p-2.5 rounded-2xl text-white shadow-lg shadow-orange-200">
-              <Utensils size={24} />
+    <div className="flex h-screen bg-[#faf7f2] text-stone-900 selection:bg-amber-200">
+      {/* Sidebar Navigation */}
+      <aside className="w-64 bg-white border-r border-stone-200 flex flex-col h-full sticky top-0 shrink-0 z-20">
+        {/* Brand Header */}
+        <div className="p-5 border-b border-stone-100 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-amber-600 p-2 rounded-xl text-white shadow-sm">
+              <Utensils size={18} />
             </div>
             <div>
-              <h1 className="text-xl font-black font-serif text-gray-900 tracking-tight leading-none">
-                {restaurantName.split(' ')[0]}<span className="text-orange-600">{restaurantName.split(' ')[1] || ''}</span>
-              </h1>
-              <div className="flex items-center gap-1 mt-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                <p className="text-[10px] text-orange-400 font-black tracking-widest uppercase">Street Smart</p>
-              </div>
+              <span className="text-base font-serif font-bold text-stone-900 leading-tight block">
+                {restaurantName}
+              </span>
+              <span className="text-[10px] text-amber-700 font-semibold tracking-wider uppercase">
+                Restaurant CRM & KDS
+              </span>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-6 space-y-2 overflow-y-auto no-scrollbar">
-          <p className="px-4 py-2 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Core Hub</p>
-          <NavItem view="dashboard" icon={<LayoutDashboard size={20} />} label="Intelligence" />
-          <NavItem view="customers" icon={<Users size={20} />} label="Guest Book" />
-          <NavItem view="reservations" icon={<Calendar size={20} />} label="Bookings" />
-          <NavItem view="menu-manager" icon={<ListTodo size={20} />} label="Menu Matrix" />
-          
-          <p className="px-4 py-2 mt-6 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Live Stall</p>
-          <NavItem view="live-orders" icon={<ClipboardList size={20} />} label="Comms Center" />
-          <NavItem view="qr-generator" icon={<QrCode size={20} />} label="Signal (QR)" />
-          
-          <p className="px-4 py-2 mt-6 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Ops</p>
-          <NavItem view="marketing" icon={<Megaphone size={20} />} label="Transmissions" />
-          <NavItem view="insights" icon={<Sparkles size={20} />} label="Neural Sync" />
-          <NavItem view="settings" icon={<SettingsIcon size={20} />} label="System Config" />
+        {/* Navigation Links */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto no-scrollbar">
+          <div className="px-3 py-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+            Overview
+          </div>
+          <NavItem view="dashboard" icon={<LayoutDashboard size={16} />} label="Executive Hub" />
+          <NavItem 
+            view="live-orders" 
+            icon={<ClipboardList size={16} />} 
+            label="Live Kitchen (KDS)" 
+            badgeCount={pendingOrderCount} 
+          />
+          <NavItem 
+            view="reservations" 
+            icon={<Calendar size={16} />} 
+            label="Table Bookings" 
+            badgeCount={pendingReservationCount} 
+          />
+
+          <div className="px-3 pt-5 py-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+            Hospitality & Menu
+          </div>
+          <NavItem view="customers" icon={<Users size={16} />} label="Guest Directory" />
+          <NavItem view="menu-manager" icon={<ListTodo size={16} />} label="Menu Matrix & 86" />
+          <NavItem view="qr-generator" icon={<QrCode size={16} />} label="Table QR Standees" />
+
+          <div className="px-3 pt-5 py-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+            Marketing & AI
+          </div>
+          <NavItem view="marketing" icon={<Megaphone size={16} />} label="WhatsApp Utsav" />
+          <NavItem view="insights" icon={<Sparkles size={16} />} label="Saffron AI Insights" />
+          <NavItem view="settings" icon={<SettingsIcon size={16} />} label="Legal & Billing Setup" />
         </nav>
 
-        <div className="p-6 border-t border-orange-50 space-y-3">
+        {/* Sidebar Footer: Quick Actions */}
+        <div className="p-4 border-t border-stone-100 space-y-2 bg-stone-50/60">
+          <button 
+            onClick={() => setActiveView('qr-menu')}
+            className="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <Smartphone size={14} className="text-amber-700" />
+            Dine-In QR Menu Test
+          </button>
           <button 
             onClick={() => setIsAIChatOpen(true)}
-            className="flex items-center gap-3 text-orange-600 bg-orange-50 hover:bg-orange-100 transition-all w-full px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider shadow-sm"
+            className="w-full py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
           >
-            <div className="relative">
-              <HelpCircle size={18} />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-orange-50 animate-bounce"></div>
-            </div>
-            <span>Help Interface</span>
-          </button>
-          <button className="flex items-center space-x-3 text-gray-400 hover:text-red-500 transition-colors w-full px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider">
-            <LogOut size={18} />
-            <span>Power Off</span>
+            <ChefHat size={14} className="text-amber-400" />
+            AI Operations Concierge
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto relative">
-        {/* Futuristic Background Accents - Dynamic Colors */}
-        <div className="fixed inset-0 pointer-events-none opacity-[0.2] overflow-hidden">
-          <div 
-            className="absolute top-[10%] right-[15%] w-[600px] h-[600px] rounded-full blur-[140px] transition-colors duration-1000"
-            style={{ backgroundColor: atmosphere.accent1 }}
-          ></div>
-          <div 
-            className="absolute bottom-[15%] left-[10%] w-[500px] h-[500px] rounded-full blur-[140px] transition-colors duration-1000"
-            style={{ backgroundColor: atmosphere.accent2 }}
-          ></div>
-        </div>
-
-        <header className="bg-white/70 backdrop-blur-xl sticky top-0 z-10 px-10 py-6 border-b border-orange-100/50 flex justify-between items-center">
-          <div className="flex flex-col">
-            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight leading-none">
-              {activeView.replace('-', ' ')}
-            </h2>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-              <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Atmosphere: {atmosphere.label}</p>
-            </div>
+      {/* Main Content Viewport */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Top Bar Contract (3 Zones) */}
+        <header className="h-14 bg-white border-b border-stone-200 px-6 flex items-center justify-between shrink-0 z-10">
+          {/* Zone 1: Single text element Brand wordmark */}
+          <div className="font-serif font-bold text-base text-stone-900 tracking-tight">
+            {restaurantName} <span className="text-xs font-sans font-normal text-stone-500">· Operations Portal</span>
           </div>
-          <div className="flex items-center space-x-6">
-            <div className="hidden md:flex flex-col items-end">
-               <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Operator Status</span>
-               <span className="text-xs font-bold text-gray-500">Online & Encrypted</span>
-            </div>
-            <div className="h-10 w-[1px] bg-orange-100"></div>
-            <div className="bg-orange-600/5 text-orange-700 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-orange-100/50 shadow-sm">
-              <Award size={16} /> Elite Protocol
-            </div>
-            <div className="relative group cursor-pointer">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=StreetStall" 
-                alt="Profile" 
-                className="w-12 h-12 rounded-[1.25rem] ring-4 ring-orange-50 group-hover:ring-orange-100 transition-all bg-orange-100 shadow-md"
-              />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-4 border-white"></div>
-            </div>
+
+          {/* Zone 2: Navigation Links */}
+          <nav className="hidden md:flex items-center gap-5 text-xs font-medium text-stone-600">
+            <button 
+              onClick={() => setActiveView('dashboard')}
+              className={`hover:text-stone-900 transition-colors ${activeView === 'dashboard' ? 'text-amber-800 font-bold' : ''}`}
+            >
+              Overview
+            </button>
+            <button 
+              onClick={() => setActiveView('live-orders')}
+              className={`hover:text-stone-900 transition-colors ${activeView === 'live-orders' ? 'text-amber-800 font-bold' : ''}`}
+            >
+              Kitchen Orders ({liveOrders.filter(o => o.status !== 'Completed').length})
+            </button>
+            <button 
+              onClick={() => setActiveView('reservations')}
+              className={`hover:text-stone-900 transition-colors ${activeView === 'reservations' ? 'text-amber-800 font-bold' : ''}`}
+            >
+              Reservations ({reservations.length})
+            </button>
+            <button 
+              onClick={() => setActiveView('marketing')}
+              className={`hover:text-stone-900 transition-colors ${activeView === 'marketing' ? 'text-amber-800 font-bold' : ''}`}
+            >
+              WhatsApp Campaigns
+            </button>
+          </nav>
+
+          {/* Zone 3: Primary Action buttons */}
+          <div className="flex items-center gap-2.5">
+            <button 
+              onClick={() => setActiveView('reservations')}
+              className="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Plus size={14} /> New Booking
+            </button>
+            <button 
+              onClick={() => setActiveView('qr-menu')}
+              className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            >
+              <Smartphone size={14} /> Guest QR Menu
+            </button>
           </div>
         </header>
 
-        <div className="p-10 relative z-0">
-          {renderContent()}
-        </div>
-      </main>
+        {/* Content Viewport */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
 
-      {/* Persistent AI Assistant */}
-      <StreetSmartAI restaurantName={restaurantName} isOpen={isAIChatOpen} onClose={() => setIsAIChatOpen(false)} />
+      {/* Floating AI Operations Concierge Modal */}
+      <StreetSmartAI 
+        restaurantName={restaurantName} 
+        isOpen={isAIChatOpen} 
+        onClose={() => setIsAIChatOpen(false)} 
+      />
     </div>
   );
 };

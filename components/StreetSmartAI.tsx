@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { X, Send, Sparkles, Utensils, Info, Zap } from 'lucide-react';
+import { X, Send, Sparkles, Utensils, Info, MessageSquare, ChefHat, Flame } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'model';
@@ -16,7 +15,10 @@ interface Props {
 
 const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: `Namaste! I'm your Street Smart Assistant for ${restaurantName}. How can I optimize your stall today?` }
+    { 
+      role: 'model', 
+      text: `Namaste! I am your AI Operations Concierge for ${restaurantName}. I can assist you with Indian menu pricing, festival campaign planning, Jain & dietary kitchen protocols, and table occupancy strategies. How may I assist your dinner service today?` 
+    }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,22 +41,30 @@ const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-flash-latest',
         contents: [...messages, { role: 'user', text: userText }].map(m => ({
-            role: m.role,
-            parts: [{ text: m.text }]
+          role: m.role,
+          parts: [{ text: m.text }]
         })),
         config: {
-          systemInstruction: `You are the 'Street Smart AI Assistant' for ${restaurantName}, a modern eatery using Street Stall CRM. You help owners with menu management, guest intelligence, and digital signal (QR) deployment. Use futuristic terminology mixed with warm Indian hospitality. Keep it snappy and strategic.`,
+          systemInstruction: `You are the executive restaurant consultant & culinary strategist for '${restaurantName}', a premier Indian restaurant offering fine dining, banquets, and digital QR table ordering.
+You specialize in:
+- Authentic North Indian, Mughlai, South Indian, and street chaat hospitality.
+- Food cost management, menu engineering, and Thali pricing in Indian Rupees (₹).
+- Strict dietary guidelines (Jain Sattvic cooking without onion/garlic, Halal standards, and allergy management).
+- Festive promotions (Diwali, Eid, Holi, Navratri, Durga Puja, New Year, Sunday Brunches).
+- Kitchen flow between Tandoor, Curry gravies, and Biryani dum stations.
+
+Keep your responses practical, concise, polite (using Indian hospitality etiquette like Namaste and Pranam), and structured in clean bullet points.`,
           temperature: 0.7,
         }
       });
 
-      const aiText = response.text || "Transmission error. Neural link unstable. Please repeat.";
+      const aiText = response.text || "I apologize, my culinary knowledge system could not process that request. Please ask again.";
       setMessages(prev => [...prev, { role: 'model', text: aiText }]);
     } catch (error) {
-      console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Signal lost. The kitchen router might be down. Check connectivity." }]);
+      console.error("AI Assistant Error:", error);
+      setMessages(prev => [...prev, { role: 'model', text: "Service temporarily unavailable. Please check your connectivity or try again shortly." }]);
     } finally {
       setIsLoading(false);
     }
@@ -63,35 +73,32 @@ const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-6 md:p-10 pointer-events-none">
-      <div className="bg-white w-full max-w-md h-[700px] max-h-[85vh] rounded-[3.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border-4 border-orange-600 flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-12 duration-500 relative">
-        {/* Animated Accent */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-orange-600 animate-pulse"></div>
-        
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:p-8 pointer-events-none">
+      <div className="bg-white w-full max-w-md h-[640px] max-h-[85vh] rounded-3xl shadow-2xl border border-stone-200 flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-8 duration-300 relative">
         {/* Header */}
-        <div className="bg-gray-900 p-8 flex items-center justify-between text-white relative">
-          <div className="flex items-center gap-4">
-            <div className="bg-orange-600 p-3 rounded-2xl shadow-lg shadow-orange-900/50">
-              <Zap size={22} className="animate-pulse" />
+        <div className="bg-stone-900 p-5 flex items-center justify-between text-white border-b border-stone-800">
+          <div className="flex items-center gap-3">
+            <div className="bg-amber-600 p-2 rounded-xl shadow-md">
+              <ChefHat size={20} className="text-stone-950" />
             </div>
             <div>
-              <h3 className="font-black uppercase tracking-tight text-lg">AI Assistant</h3>
-              <p className="text-[10px] text-orange-400 uppercase tracking-[0.2em] font-black">Link: {restaurantName.toLowerCase()}-sync</p>
+              <h3 className="font-serif font-bold text-base tracking-tight">AI Operations Concierge</h3>
+              <p className="text-[11px] text-amber-400 font-medium">Culinary & Hospitality Consultant</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X size={24} />
+          <button onClick={onClose} className="p-1.5 hover:bg-stone-800 rounded-lg text-stone-400 hover:text-white transition-colors">
+            <X size={20} />
           </button>
         </div>
 
         {/* Messaging Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 bg-[#fffdfa] no-scrollbar">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 bg-stone-50/50 text-xs">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] p-5 rounded-[2rem] text-sm leading-relaxed font-medium shadow-sm border ${
+              <div className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed font-sans shadow-xs ${
                 m.role === 'user' 
-                  ? 'bg-orange-600 text-white rounded-tr-none border-orange-500 shadow-orange-100' 
-                  : 'bg-white text-gray-800 border-orange-100 rounded-tl-none'
+                  ? 'bg-amber-600 text-white rounded-tr-none' 
+                  : 'bg-white text-stone-800 border border-stone-200/80 rounded-tl-none whitespace-pre-wrap'
               }`}>
                 {m.text}
               </div>
@@ -99,43 +106,43 @@ const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => 
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-orange-50 p-5 rounded-[2rem] rounded-tl-none shadow-inner border border-orange-100 flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+              <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-stone-200 text-stone-500 text-xs flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                  <div className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-orange-900 opacity-60">Syncing...</span>
+                <span>Consulting culinary knowledge base...</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Suggestion Nodes */}
-        <div className="px-8 py-3 bg-white border-t border-gray-50 overflow-x-auto whitespace-nowrap flex gap-3 no-scrollbar">
-           {[
-             "Optimize Menu Flow",
-             "Analyze Signal Performance",
-             "Loyalty Protocol Status",
-             "Market Flux Trends"
-           ].map(tip => (
-             <button 
+        {/* Quick Suggestion Pills */}
+        <div className="px-4 py-2 bg-white border-t border-stone-100 overflow-x-auto whitespace-nowrap flex gap-2 no-scrollbar">
+          {[
+            "Pricing our Diwali Thali",
+            "Jain cooking kitchen guidelines",
+            "Speed up Biryani station queue",
+            "Weekend upsell pairings"
+          ].map(tip => (
+            <button 
               key={tip}
               onClick={() => { setInput(tip); }}
-              className="text-[10px] font-black text-gray-400 bg-gray-50 px-5 py-2.5 rounded-full hover:bg-orange-600 hover:text-white transition-all border border-gray-100 uppercase tracking-widest"
-             >
-               {tip}
-             </button>
-           ))}
+              className="text-[11px] font-medium text-stone-600 bg-stone-50 hover:bg-amber-50 hover:text-amber-800 px-3 py-1.5 rounded-lg border border-stone-200 transition-colors"
+            >
+              {tip}
+            </button>
+          ))}
         </div>
 
-        {/* Input Interface */}
-        <div className="p-6 bg-white border-t-2 border-orange-50">
-          <div className="relative">
+        {/* Input Bar */}
+        <div className="p-4 bg-white border-t border-stone-200">
+          <div className="relative flex items-center">
             <input 
               type="text"
-              placeholder="Inject command..."
-              className="w-full pl-8 pr-16 py-5 bg-orange-50/30 rounded-[2rem] border-2 border-orange-100 focus:outline-none focus:border-orange-500 text-sm font-bold transition-all placeholder:text-gray-300"
+              placeholder="Ask operations question (e.g. Jain menu, thali pricing)..."
+              className="w-full pl-4 pr-12 py-3 bg-stone-50 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-500 text-xs text-stone-800"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
@@ -143,16 +150,10 @@ const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => 
             <button 
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center hover:bg-orange-600 transition-all disabled:opacity-30 disabled:grayscale shadow-lg"
+              className="absolute right-2 w-8 h-8 bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 shadow-xs"
             >
-              <Send size={20} />
+              <Send size={14} />
             </button>
-          </div>
-          <div className="flex items-center justify-center gap-2 mt-4">
-             <Info size={12} className="text-orange-400" />
-             <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
-               Experimental Neural Assistant • v2.5.0
-             </p>
           </div>
         </div>
       </div>

@@ -1,391 +1,537 @@
-
 import React, { useState, useEffect } from 'react';
-import { MenuItem, PaymentMethod, Order } from '../types';
-import { ShoppingBasket, Plus, Minus, CreditCard, Banknote, Store, ChevronLeft, CheckCircle2, IndianRupee, Star, Flame, Award, Zap, RefreshCw, Clock, Coffee } from 'lucide-react';
+import { MenuItem, PaymentMethod, Order, OrderItem, SpiceLevel } from '../types';
+import { 
+  ShoppingBasket, 
+  Plus, 
+  Minus, 
+  ChevronLeft, 
+  CheckCircle2, 
+  IndianRupee, 
+  Flame, 
+  Clock, 
+  Coffee, 
+  Utensils, 
+  Search,
+  Check,
+  ShieldCheck,
+  X
+} from 'lucide-react';
+
+interface CartItemData {
+  quantity: number;
+  spice: SpiceLevel;
+  isJain: boolean;
+  note: string;
+}
 
 interface Props {
   restaurantName: string;
   menu: MenuItem[];
   onPlaceOrder: (order: Order) => void;
   onClose: () => void;
-  liveOrders: Order[]; // Passed from parent to track active order
+  liveOrders: Order[];
 }
 
-const QRMenu: React.FC<Props> = ({ restaurantName, menu, onPlaceOrder, onClose, liveOrders }) => {
-  const [cart, setCart] = useState<{ [id: string]: number }>({});
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Online');
+const QRMenu: React.FC<Props> = ({ 
+  restaurantName, 
+  menu, 
+  onPlaceOrder, 
+  onClose, 
+  liveOrders 
+}) => {
+  const [cart, setCart] = useState<Record<string, CartItemData>>({});
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI / QR');
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [selectedDietary, setSelectedDietary] = useState<'all' | 'veg' | 'jain' | 'nonveg'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [guestName, setGuestName] = useState('Guest at Table T-04');
+  const [tableNumber, setTableNumber] = useState('Table T-04');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [customizingItem, setCustomizingItem] = useState<MenuItem | null>(null);
+  const [customSpice, setCustomSpice] = useState<SpiceLevel>('Medium');
+  const [customJain, setCustomJain] = useState(false);
+  const [customNote, setCustomNote] = useState('');
 
-  // Find the current guest's active order in the global state
   const currentOrder = liveOrders.find(o => o.id === activeOrderId);
 
-  // Simulation: Recognize guest
-  const isRecognizedGuest = true; 
-  const guestName = "Aarav";
+  const cartValues = Object.values(cart) as CartItemData[];
+  const cartEntries = Object.entries(cart) as [string, CartItemData][];
 
-  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
-  const totalPrice = Object.entries(cart).reduce((sum, [id, qty]) => {
+  const totalItems: number = cartValues.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal: number = cartEntries.reduce((sum, [id, data]) => {
     const item = menu.find(m => m.id === id);
-    return sum + (item ? item.price * qty : 0);
+    return sum + (item ? item.price * data.quantity : 0);
   }, 0);
+  const gst = Math.round(subtotal * 0.05); // 5% standard GST
+  const grandTotal = subtotal + gst;
 
-  const updateCart = (id: string, delta: number) => {
+  const categories = Array.from(new Set(menu.map(m => m.category)));
+
+  const handleOpenCustomize = (item: MenuItem) => {
+    setCustomizingItem(item);
+    setCustomSpice(item.spiceLevel);
+    setCustomJain(false);
+    setCustomNote('');
+  };
+
+  const handleAddCustomizedToCart = () => {
+    if (!customizingItem) return;
+    const existing = cart[customizingItem.id] || { quantity: 0, spice: 'Medium', isJain: false, note: '' };
+    setCart(prev => ({
+      ...prev,
+      [customizingItem.id]: {
+        quantity: existing.quantity + 1,
+        spice: customSpice,
+        isJain: customJain,
+        note: customNote
+      }
+    }));
+    setCustomizingItem(null);
+  };
+
+  const updateCartQuantity = (id: string, delta: number) => {
     setCart(prev => {
-      const newQty = (prev[id] || 0) + delta;
+      const existing = prev[id];
+      if (!existing) return prev;
+      const newQty = existing.quantity + delta;
       if (newQty <= 0) {
         const { [id]: _, ...rest } = prev;
         return rest;
       }
-      return { ...prev, [id]: newQty };
+      return { ...prev, [id]: { ...existing, quantity: newQty } };
     });
   };
 
   const handleCheckout = () => {
-    const newId = Math.random().toString(36).substr(2, 9);
-    const order: Order = {
+    if (totalItems === 0) return;
+
+    const newId = `ord_${Date.now()}`;
+    const orderItems: OrderItem[] = (Object.entries(cart) as [string, CartItemData][]).map(([id, data]) => {
+      const m = menu.find(item => item.id === id)!;
+      return {
+        menuItemId: id,
+        name: m.name,
+        price: m.price,
+        quantity: data.quantity,
+        spicePreference: data.spice,
+        isJain: data.isJain,
+        cookingNote: data.note
+      };
+    });
+
+    const newOrder: Order = {
       id: newId,
-      customerId: '1', 
-      items: Object.entries(cart).map(([id, qty]) => ({ menuItemId: id, quantity: qty })),
-      totalPrice,
+      orderNumber: Math.floor(100 + Math.random() * 900),
+      customerName: guestName,
+      customerPhone: guestPhone || '+91 98201 44521',
+      tableNumber,
+      orderType: 'QR Table Order',
+      items: orderItems,
+      subtotal,
+      gst,
+      totalPrice: grandTotal,
       paymentMethod,
-      timestamp: new Date().toLocaleTimeString(),
-      status: 'Pending'
+      paymentStatus: 'Paid',
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      status: 'Pending',
+      estimatedReadyAt: Date.now() + 15 * 60 * 1000,
+      prepProgress: 10
     };
-    onPlaceOrder(order);
+
+    onPlaceOrder(newOrder);
     setActiveOrderId(newId);
+    setCart({});
   };
 
-  // Tracking View Component
-  const OrderTracker = ({ order }: { order: Order }) => {
-    const [timeLeft, setTimeLeft] = useState<string>('Calculated by AI...');
-
-    useEffect(() => {
-      if (!order.estimatedReadyAt) return;
-      const interval = setInterval(() => {
-        const diff = order.estimatedReadyAt! - Date.now();
-        if (diff <= 0) {
-          setTimeLeft('Ready momentarily!');
-        } else {
-          const mins = Math.floor(diff / 60000);
-          const secs = Math.floor((diff % 60000) / 1000);
-          setTimeLeft(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }, [order.estimatedReadyAt]);
-
-    const getStatusStep = () => {
-      if (order.status === 'Pending') return 1;
-      if (order.status === 'Preparing') return 2;
-      if (order.status === 'Completed') return 3;
-      return 1;
-    };
-
+  // Order Tracker Component
+  if (activeOrderId && currentOrder) {
     return (
-      <div className="fixed inset-0 bg-[#fffcf8] z-[100] flex flex-col overflow-y-auto">
-        <header className="bg-white/90 backdrop-blur-xl px-8 py-6 border-b border-orange-100 sticky top-0 z-10 shadow-lg flex justify-between items-center">
-          <h2 className="text-xl font-black uppercase tracking-tight text-gray-900">Live Tracker</h2>
-          <div className="flex items-center gap-2 bg-orange-600 px-3 py-1 rounded-full text-[8px] font-black text-white uppercase tracking-[0.2em] shadow-md animate-pulse">
-            <Zap size={10} className="fill-current" /> Neural Feed
+      <div className="fixed inset-0 bg-[#faf7f2] z-50 flex flex-col overflow-y-auto">
+        <header className="bg-white px-6 py-4 border-b border-stone-200 sticky top-0 z-10 flex justify-between items-center shadow-xs">
+          <div>
+            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Live Kitchen Tracker</span>
+            <h2 className="text-base font-bold text-stone-900 leading-tight">Order #{currentOrder.orderNumber}</h2>
           </div>
+          <button 
+            onClick={() => setActiveOrderId(null)}
+            className="text-xs font-semibold text-amber-700 hover:text-amber-800"
+          >
+            Order More Items
+          </button>
         </header>
 
-        <div className="p-8 space-y-8 flex-1">
-          {/* Hero Tracker Card */}
-          <div className="bg-neutral-900 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden text-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-600/20 to-transparent pointer-events-none"></div>
-            
-            <div className="relative z-10 space-y-6">
-               <div className="flex justify-center">
-                  <div className="relative w-40 h-40">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/10" />
-                      <circle 
-                        cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="8" fill="transparent" 
-                        strokeDasharray={440} 
-                        strokeDashoffset={440 - (440 * (order.prepProgress || 0)) / 100}
-                        strokeLinecap="round" 
-                        className="text-orange-500 transition-all duration-1000 ease-linear" 
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                       {order.status === 'Completed' ? (
-                         <CheckCircle2 size={48} className="text-green-500 animate-bounce" />
-                       ) : (
-                         <>
-                           <span className="text-3xl font-black tabular-nums">{order.prepProgress || 0}%</span>
-                           <span className="text-[8px] font-black uppercase tracking-widest text-orange-400">Fused</span>
-                         </>
-                       )}
+        <div className="p-6 max-w-lg mx-auto w-full space-y-6 flex-1">
+          {/* Tracker Card */}
+          <div className="bg-stone-900 text-white p-7 rounded-3xl shadow-xl text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-amber-400">
+                {currentOrder.status === 'Completed' ? (
+                  <CheckCircle2 size={40} className="text-emerald-400" />
+                ) : (
+                  <Flame size={40} className="animate-pulse" />
+                )}
+              </div>
+            </div>
+
+            <div>
+              <span className="text-xs uppercase tracking-widest text-amber-400 font-bold">
+                {currentOrder.tableNumber}
+              </span>
+              <h3 className="text-2xl font-serif font-bold text-stone-100 mt-1">
+                {currentOrder.status === 'Pending' && 'Order Received at Kitchen'}
+                {currentOrder.status === 'Preparing' && 'In Tandoor & Curry Station'}
+                {currentOrder.status === 'Ready' && 'Ready to Serve at Table'}
+                {currentOrder.status === 'Completed' && 'Served & Completed'}
+              </h3>
+              <p className="text-xs text-stone-300 mt-1">
+                {currentOrder.status === 'Pending' && 'Chef is reviewing your cooking instructions and queueing tickets.'}
+                {currentOrder.status === 'Preparing' && 'Tandoor naans are being fired and gravies simmering to your requested spice level.'}
+                {currentOrder.status === 'Ready' && 'Your food is plated hot and our steward is bringing it to your table!'}
+                {currentOrder.status === 'Completed' && 'We hope you enjoyed the authentic flavours of India!'}
+              </p>
+            </div>
+
+            {/* Step Indicators */}
+            <div className="pt-2 flex justify-between text-xs text-stone-400 border-t border-stone-800">
+              <span className={currentOrder.status !== 'Cancelled' ? 'text-amber-400 font-semibold' : ''}>1. Received</span>
+              <span className={currentOrder.status === 'Preparing' || currentOrder.status === 'Ready' || currentOrder.status === 'Completed' ? 'text-amber-400 font-semibold' : ''}>2. In Wok & Clay Oven</span>
+              <span className={currentOrder.status === 'Ready' || currentOrder.status === 'Completed' ? 'text-emerald-400 font-semibold' : ''}>3. Served at Table</span>
+            </div>
+          </div>
+
+          {/* Itemized Order Recap */}
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 border-b border-stone-100 pb-2">
+              Ticket Details
+            </h4>
+            <div className="space-y-2 text-xs">
+              {currentOrder.items.map((item, i) => (
+                <div key={i} className="flex justify-between items-start text-stone-800">
+                  <div>
+                    <span className="font-semibold">{item.quantity}x {item.name}</span>
+                    <div className="text-[11px] text-stone-500">
+                      {item.spicePreference && `Spice: ${item.spicePreference}`}
+                      {item.isJain && ` · Strict Jain`}
                     </div>
                   </div>
-               </div>
+                  <span className="font-mono font-semibold tabular-nums">₹{item.price * item.quantity}</span>
+                </div>
+              ))}
+            </div>
 
-               <div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight">
-                    {order.status === 'Pending' && 'Queued for Prep'}
-                    {order.status === 'Preparing' && 'In Neural Lab'}
-                    {order.status === 'Completed' && 'Protocol Complete'}
-                  </h3>
-                  <p className="text-xs text-orange-100/60 font-medium mt-1">
-                    {order.status === 'Pending' && 'Waiting for chef to accept transmission.'}
-                    {order.status === 'Preparing' && 'Hand-crafting your street selections.'}
-                    {order.status === 'Completed' && 'Your order is hot and ready at the stall!'}
-                  </p>
-               </div>
-
-               {order.status !== 'Completed' && (
-                 <div className="bg-white/5 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-white/10">
-                    <div className="flex items-center gap-3">
-                       <Clock size={20} className="text-orange-500" />
-                       <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Est. Arrival</span>
-                    </div>
-                    <span className="text-2xl font-black text-white tabular-nums">{timeLeft}</span>
-                 </div>
-               )}
+            <div className="pt-3 border-t border-stone-100 flex justify-between items-center text-xs font-bold text-stone-900">
+              <span>Total Bill (Inc. 5% GST)</span>
+              <span className="font-mono text-base text-amber-800 tabular-nums">₹{currentOrder.totalPrice}</span>
             </div>
           </div>
 
-          {/* Steps */}
-          <div className="px-4">
-             <div className="flex justify-between relative">
-                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-orange-100 -translate-y-1/2 z-0"></div>
-                {[
-                  { step: 1, label: 'Linked', icon: <Zap size={14}/> },
-                  { step: 2, label: 'Firing', icon: <Flame size={14}/> },
-                  { step: 3, label: 'Ready', icon: <Coffee size={14}/> }
-                ].map(s => (
-                  <div key={s.step} className="relative z-10 flex flex-col items-center gap-2">
-                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                       getStatusStep() >= s.step ? 'bg-orange-600 text-white shadow-lg' : 'bg-white text-gray-300 border border-orange-100'
-                     }`}>
-                        {s.icon}
-                     </div>
-                     <span className={`text-[9px] font-black uppercase tracking-widest ${getStatusStep() >= s.step ? 'text-orange-950' : 'text-gray-300'}`}>{s.label}</span>
-                  </div>
-                ))}
-             </div>
-          </div>
-
-          {/* Items Recap */}
-          <div className="bg-white rounded-[2.5rem] p-8 border border-orange-100 shadow-sm space-y-6">
-            <h4 className="text-sm font-black uppercase tracking-widest text-gray-400 border-b border-orange-50 pb-4">Order Transmission Details</h4>
-            <div className="space-y-4">
-               {order.items.map(oi => {
-                 const m = menu.find(item => item.id === oi.menuItemId);
-                 return (
-                   <div key={oi.menuItemId} className="flex justify-between items-center">
-                      <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center font-black text-orange-600 border border-orange-100">
-                           {oi.quantity}
-                         </div>
-                         <div>
-                            <span className="block font-black text-gray-800 text-sm leading-none">{m?.name}</span>
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Prep: {m?.prepTimeMinutes}m</span>
-                         </div>
-                      </div>
-                      <span className="text-xs font-black text-orange-600 flex items-center tabular-nums">
-                        <IndianRupee size={12} /> {(m?.price || 0) * oi.quantity}
-                      </span>
-                   </div>
-                 );
-               })}
-            </div>
-            <div className="pt-4 border-t border-orange-50 flex justify-between items-center">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Network Total</span>
-               <span className="text-xl font-black text-gray-900 flex items-center tabular-nums"><IndianRupee size={18}/>{order.totalPrice}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-8">
-           <button 
+          <button
             onClick={onClose}
-            className="w-full py-5 bg-gray-900 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-orange-900/10 active:scale-95 transition-all"
-           >
-            Back to Hub
-           </button>
+            className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-stone-100 rounded-xl text-xs font-semibold transition-colors"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
-  };
-
-  if (activeOrderId && currentOrder) {
-    return <OrderTracker order={currentOrder} />;
   }
 
-  const categories = Array.from(new Set(menu.map(m => m.category)));
-  const isSingleItem = menu.length === 1;
+  const filteredMenuItems = menu.filter(m => {
+    if (!m.inStock) return false;
+    const matchesCategory = selectedCategory === 'all' || m.category === selectedCategory;
+    const matchesDietary = 
+      selectedDietary === 'all' ||
+      (selectedDietary === 'veg' && m.isVeg) ||
+      (selectedDietary === 'jain' && m.isJainAvailable) ||
+      (selectedDietary === 'nonveg' && !m.isVeg);
+    return matchesCategory && matchesDietary;
+  });
 
   return (
-    <div className="fixed inset-0 bg-[#fffcf8] z-[100] flex flex-col overflow-hidden">
-      {/* Sci-Fi Dynamic Header */}
-      <header className="bg-white/90 backdrop-blur-xl px-8 py-6 border-b border-orange-100 sticky top-0 z-10 shadow-lg">
-        <div className="flex items-center justify-between">
-          <button onClick={onClose} className="p-3 -ml-3 text-orange-600 hover:bg-orange-50 rounded-2xl transition-colors"><ChevronLeft size={28} /></button>
-          <div className="text-center">
-            {isRecognizedGuest ? (
-              <div className="animate-in fade-in slide-in-from-top-2">
-                <div className="inline-flex items-center gap-1.5 bg-orange-600 px-3 py-1 rounded-full text-[8px] font-black text-white uppercase tracking-[0.3em] mb-1 shadow-md">
-                   <Zap size={10} className="fill-current" /> Sync Active
-                </div>
-                <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Namaste, {guestName}!</h1>
-              </div>
-            ) : (
-              <div>
-                <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">{restaurantName}</h1>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Street Smart Node</p>
-              </div>
-            )}
+    <div className="fixed inset-0 bg-[#faf7f2] z-50 flex flex-col overflow-hidden">
+      {/* Top Navbar */}
+      <header className="bg-white px-5 py-3.5 border-b border-stone-200 sticky top-0 z-20 flex items-center justify-between shadow-xs">
+        <button 
+          onClick={onClose}
+          className="p-2 -ml-2 text-stone-600 hover:text-stone-900 rounded-lg hover:bg-stone-50"
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        <div className="text-center">
+          <h1 className="text-lg font-serif font-bold text-stone-900 leading-tight">
+            {restaurantName}
+          </h1>
+          <div className="text-[11px] text-stone-500 font-medium">
+            {tableNumber} · Digital Dining
           </div>
-          <div className="relative p-3">
-            <ShoppingBasket size={28} className="text-orange-600" />
-            {totalItems > 0 && (
-              <span className="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce">
-                {totalItems}
-              </span>
-            )}
-          </div>
+        </div>
+
+        <div className="relative p-2 text-amber-700">
+          <ShoppingBasket size={22} />
+          {totalItems > 0 && (
+            <span className="absolute top-1 right-1 bg-amber-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+              {totalItems}
+            </span>
+          )}
         </div>
       </header>
 
-      {/* Grid Pattern Background */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-10 pb-40 relative">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ea580c 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-        
-        {/* Pulse Banner */}
-        {!isSingleItem && (
-          <div className="bg-neutral-900 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-r from-orange-600/30 to-transparent"></div>
-             <div className="relative z-10">
-               <div className="flex items-center gap-2 mb-4">
-                 <Zap size={16} className="text-orange-500 fill-current animate-pulse" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-400">Street Signal Strength: High</span>
-               </div>
-               <h3 className="text-3xl font-black leading-tight mb-3 tracking-tight">Today's Hyper-Hits</h3>
-               <p className="text-xs font-bold text-orange-100 opacity-60 leading-relaxed max-w-xs">Data predicts high satisfaction for Vada Pav and Lassi pairings. Join the trend?</p>
-             </div>
-             <div className="absolute top-0 right-0 p-8 opacity-10">
-                <Flame size={120} />
-             </div>
-          </div>
-        )}
+      {/* Dietary Filters & Categories */}
+      <div className="bg-white border-b border-stone-200 px-5 py-2.5 space-y-2 shrink-0">
+        {/* Dietary Filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setSelectedDietary('all')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 ${
+              selectedDietary === 'all'
+                ? 'bg-stone-900 text-white'
+                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
+          >
+            All Dishes
+          </button>
+          <button
+            onClick={() => setSelectedDietary('veg')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 flex items-center gap-1 ${
+              selectedDietary === 'veg'
+                ? 'bg-emerald-700 text-white'
+                : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+            }`}
+          >
+            <span>●</span> Pure Veg
+          </button>
+          <button
+            onClick={() => setSelectedDietary('jain')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 flex items-center gap-1 ${
+              selectedDietary === 'jain'
+                ? 'bg-amber-700 text-white'
+                : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
+            }`}
+          >
+            <span>🟢</span> Jain Friendly
+          </button>
+          <button
+            onClick={() => setSelectedDietary('nonveg')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 flex items-center gap-1 ${
+              selectedDietary === 'nonveg'
+                ? 'bg-rose-700 text-white'
+                : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
+            }`}
+          >
+            <span>▲</span> Non-Veg
+          </button>
+        </div>
 
-        {menu.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400 font-bold uppercase tracking-widest text-xs space-y-3 w-full">
-            <RefreshCw className="animate-spin text-orange-600" />
-            <p>Syncing Menu with Core...</p>
-          </div>
-        ) : (
-          categories.map(category => {
-            const filteredItems = menu.filter(m => m.category === category);
-            return (
-              <section key={category}>
-                <div className="flex items-center gap-4 mb-8">
-                  <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex-shrink-0">
-                    {category}
-                  </h3>
-                  <div className="h-[1px] bg-orange-100 w-full"></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {filteredItems.map(item => (
-                    <div key={item.id} className="bg-white rounded-[3rem] shadow-sm border border-orange-50/50 overflow-hidden relative group transition-all hover:shadow-xl hover:-translate-y-1">
-                      {/* Interactive Badges */}
-                      {(item.name === 'Vada Pav' || item.name === 'Chole Bhature') && (
-                        <div className="absolute top-6 left-6 z-10 flex flex-col gap-2">
-                          <div className="bg-orange-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl border border-white/20">
-                            <Zap size={10} className="fill-current" /> High Energy
-                          </div>
-                          {isRecognizedGuest && item.name === 'Vada Pav' && (
-                            <div className="bg-gray-900 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl animate-pulse">
-                              <Star size={10} className="fill-current text-orange-500" /> Personal Target
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <div className="relative overflow-hidden h-60">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                        <div className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-md px-5 py-2 rounded-2xl text-orange-600 font-black text-xl shadow-xl flex items-center gap-1.5 border border-orange-50">
-                          <IndianRupee size={16} />{item.price}
-                        </div>
-                      </div>
-                      <div className="p-8 space-y-6">
-                        <div>
-                          <h4 className="font-black text-gray-900 text-2xl leading-none tracking-tight">{item.name}</h4>
-                          <p className="text-sm text-gray-500 leading-relaxed mt-3 font-medium opacity-80">{item.description}</p>
-                        </div>
-                        <div className="flex justify-center items-center pt-2">
-                          <div className="flex items-center gap-6 bg-orange-50/50 rounded-[1.5rem] p-2 w-full justify-between px-6 border border-orange-100 shadow-inner">
-                            <button 
-                              onClick={() => updateCart(item.id, -1)}
-                              className="w-12 h-12 rounded-2xl bg-white border-2 border-orange-100 flex items-center justify-center text-orange-600 shadow-sm active:bg-gray-100 transition-all hover:border-orange-300"
-                            >
-                              <Minus size={20} />
-                            </button>
-                            <span className="text-2xl font-black text-orange-950 w-8 text-center tabular-nums">{cart[item.id] || 0}</span>
-                            <button 
-                              onClick={() => updateCart(item.id, 1)}
-                              className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center shadow-lg shadow-orange-200 active:scale-90 hover:bg-orange-700 transition-all"
-                            >
-                              <Plus size={20} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })
-        )}
+        {/* Category Filter */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs text-stone-500">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`shrink-0 pb-1 font-semibold ${selectedCategory === 'all' ? 'text-amber-800 border-b-2 border-amber-800' : 'hover:text-stone-800'}`}
+          >
+            All
+          </button>
+          {categories.map(c => (
+            <button
+              key={c}
+              onClick={() => setSelectedCategory(c)}
+              className={`shrink-0 pb-1 font-semibold ${selectedCategory === c ? 'text-amber-800 border-b-2 border-amber-800' : 'hover:text-stone-800'}`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Signal Transmission Section (Checkout) */}
-      {totalItems > 0 && (
-        <div className="bg-white border-t-2 border-orange-600 p-8 shadow-2xl space-y-6 rounded-t-[4rem] animate-in slide-in-from-bottom-full duration-700 z-20">
-          <div className="flex justify-between items-center px-4">
-            <div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1 block">Neural Total</span>
-              <div className="text-4xl font-black text-gray-900 flex items-center tracking-tighter"><IndianRupee size={28} className="text-orange-600" />{totalPrice}</div>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-1 block">Payload</span>
-              <div className="text-xl font-black text-gray-700">{totalItems} Quantum Units</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { id: 'Online', label: 'Signal/UPI', icon: <Zap size={20} /> },
-              { id: 'Money', label: 'Physical', icon: <Banknote size={20} /> },
-              { id: 'Offline', label: 'Counter', icon: <Store size={20} /> }
-            ].map(method => (
-              <button
-                key={method.id}
-                onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                className={`flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] border-2 transition-all group ${
-                  paymentMethod === method.id 
-                    ? 'border-orange-600 bg-orange-50 text-orange-700 shadow-inner' 
-                    : 'border-orange-50 text-gray-400 hover:bg-orange-50/50'
-                }`}
-              >
-                <div className={`${paymentMethod === method.id ? 'text-orange-600' : 'text-gray-300 group-hover:text-orange-300'} transition-colors`}>
-                  {method.icon}
+      {/* Main Menu Dish List */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-2xl mx-auto w-full pb-36">
+        {filteredMenuItems.map(item => {
+          const cartItem = cart[item.id];
+          return (
+            <div 
+              key={item.id} 
+              className="bg-white p-4 rounded-2xl border border-stone-200/80 shadow-xs flex gap-4 transition-all hover:border-amber-200"
+            >
+              {/* Dish Thumbnail */}
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200 relative">
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover" 
+                />
+                <div className="absolute top-1.5 left-1.5">
+                  <span className={`w-3.5 h-3.5 border flex items-center justify-center rounded-xs bg-white ${
+                    item.isVeg ? 'border-emerald-600' : 'border-rose-600'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-emerald-600' : 'bg-rose-600'}`}></span>
+                  </span>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest">{method.label}</span>
-              </button>
-            ))}
-          </div>
+              </div>
 
-          <button 
-            onClick={handleCheckout}
-            className="w-full py-6 bg-orange-600 text-white rounded-[2.5rem] font-black text-xl shadow-2xl shadow-orange-900/20 flex items-center justify-center gap-4 transition-all active:scale-95 hover:bg-orange-700 border-b-4 border-orange-800"
-          >
-            Transmit Order Node
-          </button>
+              {/* Dish Info */}
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <div className="flex justify-between items-start gap-2">
+                    <h3 className="font-bold text-stone-900 text-sm leading-snug">{item.name}</h3>
+                  </div>
+                  {item.hindiName && (
+                    <p className="text-[11px] text-stone-400 font-medium">{item.hindiName}</p>
+                  )}
+                  <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                    {item.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] text-stone-500 pt-0.5">
+                    <span className="flex items-center gap-0.5 text-amber-800 font-medium">
+                      <Flame size={11} className="text-amber-600" /> {item.spiceLevel}
+                    </span>
+                    <span>·</span>
+                    <span>{item.prepTimeMinutes} mins</span>
+                    {item.isJainAvailable && (
+                      <>
+                        <span>·</span>
+                        <span className="text-emerald-700 font-semibold">Jain available</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Price and Add Control */}
+                <div className="pt-2 flex items-center justify-between">
+                  <span className="font-bold font-mono text-base text-stone-900 tabular-nums">
+                    ₹{item.price}
+                  </span>
+
+                  {cartItem ? (
+                    <div className="flex items-center gap-2 bg-stone-100 rounded-lg p-1 border border-stone-200">
+                      <button 
+                        onClick={() => updateCartQuantity(item.id, -1)}
+                        className="w-7 h-7 rounded bg-white text-stone-800 flex items-center justify-center shadow-xs hover:bg-stone-50"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="font-bold font-mono text-xs w-5 text-center tabular-nums">
+                        {cartItem.quantity}
+                      </span>
+                      <button 
+                        onClick={() => updateCartQuantity(item.id, 1)}
+                        className="w-7 h-7 rounded bg-amber-600 text-white flex items-center justify-center shadow-xs hover:bg-amber-700"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleOpenCustomize(item)}
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-all shadow-xs flex items-center gap-1"
+                    >
+                      <Plus size={14} /> Add to Order
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Customization Modal */}
+      {customizingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-sm w-full p-5 space-y-4">
+            <div className="flex justify-between items-start border-b border-stone-100 pb-2">
+              <div>
+                <h3 className="font-serif font-bold text-base text-stone-900">{customizingItem.name}</h3>
+                <span className="text-xs text-stone-500 font-mono">₹{customizingItem.price}</span>
+              </div>
+              <button onClick={() => setCustomizingItem(null)} className="text-stone-400 hover:text-stone-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">Select Desired Spice Level</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['Mild', 'Medium', 'Teekha', 'Desi Spicy'] as SpiceLevel[]).map(lvl => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setCustomSpice(lvl)}
+                      className={`p-2 rounded-lg border text-left font-medium transition-colors ${
+                        customSpice === lvl ? 'border-amber-600 bg-amber-50 text-amber-900 font-bold' : 'border-stone-200 bg-white text-stone-700'
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {customizingItem.isJainAvailable && (
+                <label className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={customJain}
+                    onChange={(e) => setCustomJain(e.target.checked)}
+                    className="rounded text-emerald-600"
+                  />
+                  <span className="font-semibold">Prepare 100% Jain (No Onion/Garlic)</span>
+                </label>
+              )}
+
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">Cooking Note to Chef</label>
+                <input 
+                  type="text"
+                  placeholder="e.g. Less oil, extra crispy roti, no coriander"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-amber-500"
+                  value={customNote}
+                  onChange={(e) => setCustomNote(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleAddCustomizedToCart}
+              className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm"
+            >
+              Add to Basket (₹{customizingItem.price})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Cart & Checkout Strip */}
+      {totalItems > 0 && (
+        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-stone-200 p-4 shadow-xl z-30">
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="w-full sm:w-auto flex justify-between sm:flex-col text-xs">
+              <span className="text-stone-500">{totalItems} dishes in order · Table T-04</span>
+              <div className="font-bold text-base font-mono text-stone-900 tabular-nums">
+                ₹{grandTotal} <span className="text-[11px] text-stone-400 font-normal">(inc. 5% GST)</span>
+              </div>
+            </div>
+
+            <div className="w-full sm:w-auto flex items-center gap-2">
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                className="px-3 py-2 rounded-xl border border-stone-200 text-xs font-semibold bg-stone-50 text-stone-800"
+              >
+                <option value="UPI / QR">Pay via UPI (GPay/PhonePe)</option>
+                <option value="Cash">Cash at Table</option>
+                <option value="Card">Credit / Debit Card</option>
+              </select>
+
+              <button
+                onClick={handleCheckout}
+                className="flex-1 sm:flex-none px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md flex items-center justify-center gap-1.5"
+              >
+                Send Order to Kitchen
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
