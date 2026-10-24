@@ -22,7 +22,7 @@ export const getAIGeneratedCampaign = async (
   const dietaryNote = getDietaryNote(dietaryTags);
   const promoCode = `${restaurantName.replace(/\s+/g, "").slice(0, 4).toUpperCase()}FEST`;
 
-  return `Namaste ${guestName}! 👋\n\nWe are delighted to invite you to ${restaurantName}'s special ${topic}. Our chefs have curated a menu for guests who love ${spice} spice and authentic Indian comfort.\n\n${dietaryNote}\n\nFeatured picks:\n• Royal Hyderabadi Dum Biryani\n• Tandoori Paneer Tikka\n• Dal Makhani with Butter Naan\n\nEnjoy a warm family dining experience with festive hospitality, chef recommendations, and a curated tasting platter.\n\nUse code *${promoCode}* to unlock a special table offer. Reserve your table today and bring your family for an unforgettable evening.\n\nPranam,\n${restaurantName} Hospitality Team`;
+  return `Namaste ${guestName}! 👋\n\nWe are delighted to invite you to ${restaurantName}'s special ${topic}. Our chefs have curated a menu for guests who love ${spice} spice and authentic Indian flavors. ${dietaryNote}\n\nUse code ${promoCode} for a special celebration offer. We look forward to hosting you for a memorable dining experience.`;
 };
 
 export const analyzeCustomerTrends = async (
@@ -31,12 +31,12 @@ export const analyzeCustomerTrends = async (
   restaurantName: string = "MasalaCraft"
 ) => {
   const totalSpend = customers.reduce((sum, customer) => sum + (customer.totalSpend || 0), 0);
-  const vipCount = customers.filter(customer => customer.tier === "VIP" || customer.tier === "Gold").length;
+  const vipCount = customers.filter(customer => customer.tier === "Gold" || customer.tier === "Maharaja VIP").length;
   const highSpice = customers.filter(customer => /teekha|spicy|hot/i.test(customer.spicePreference || "")).length;
   const vegOrJain = customers.filter(customer =>
     customer.dietaryTags.some(tag => /jain|veg|vegetarian/i.test(tag))
   ).length;
-  const avgOrder = orders.length ? orders.reduce((sum, order) => sum + (order.total || 0), 0) / orders.length : 0;
+  const avgOrder = orders.length ? orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0) / orders.length : 0;
 
   return `### Strategic Intelligence for ${restaurantName}
 
