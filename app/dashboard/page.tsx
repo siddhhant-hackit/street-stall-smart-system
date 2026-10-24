@@ -1,25 +1,10 @@
-import Link from 'next/link';
-import { ArrowRight, Bell, BriefcaseBusiness, ChefHat, CircleDollarSign, Clock3, LayoutDashboard, MenuSquare, MessageSquareText, QrCode, Users } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { requireUser } from '@/lib/auth';
 import { data } from '@/lib/restaurant-data';
 
-const navItems = [
-  { label: 'Overview', icon: LayoutDashboard },
-  { label: 'Orders', icon: BriefcaseBusiness },
-  { label: 'Reservations', icon: Clock3 },
-  { label: 'Customers', icon: Users },
-  { label: 'Menu', icon: MenuSquare },
-  { label: 'Marketing', icon: MessageSquareText },
-  { label: 'QR Menu', icon: QrCode },
-];
+export default async function DashboardPage() {
+  await requireUser();
 
-const statCards = [
-  { label: 'Gross Sales', value: '₹2,48,000', change: '+12.4%' },
-  { label: 'Active Orders', value: '18', change: '+6 today' },
-  { label: 'Bookings', value: '54', change: '+9 this week' },
-  { label: 'Repeat Guests', value: '71%', change: '+4.1%' },
-];
-
-export default function DashboardPage() {
   return (
     <main className="dashboard-shell">
       <aside className="sidebar">
@@ -32,17 +17,17 @@ export default function DashboardPage() {
         </div>
 
         <nav className="nav-menu">
-          {navItems.map(({ label, icon: Icon }) => (
+          {['Overview', 'Orders', 'Reservations', 'Customers', 'Menu', 'Marketing', 'QR Menu'].map((label) => (
             <button key={label} className={label === 'Overview' ? 'nav-item active' : 'nav-item'}>
-              <Icon size={16} /> {label}
+              {label}
             </button>
           ))}
         </nav>
 
         <div className="sidebar-card">
           <div className="tiny-label">Quick actions</div>
-          <Link href="/" className="secondary-btn full">Back to landing</Link>
-          <button className="primary-btn full">Launch campaign</button>
+          <a href="/pricing" className="secondary-btn full">Plans</a>
+          <a href="/login" className="primary-btn full">Logout</a>
         </div>
       </aside>
 
@@ -53,17 +38,21 @@ export default function DashboardPage() {
             <h1>MasalaCraft</h1>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" aria-label="notifications"><Bell size={16} /></button>
             <button className="primary-btn">New booking</button>
           </div>
         </header>
 
         <section className="stats-grid">
-          {statCards.map(card => (
-            <div key={card.label} className="stat-card">
-              <span>{card.label}</span>
-              <strong>{card.value}</strong>
-              <small>{card.change}</small>
+          {[
+            ['Gross Sales', '₹2,48,000', '+12.4%'],
+            ['Active Orders', '18', '+6 today'],
+            ['Bookings', '54', '+9 this week'],
+            ['Repeat Guests', '71%', '+4.1%'],
+          ].map(([label, value, change]) => (
+            <div key={label} className="stat-card">
+              <span>{label}</span>
+              <strong>{value}</strong>
+              <small>{change}</small>
             </div>
           ))}
         </section>
@@ -75,7 +64,7 @@ export default function DashboardPage() {
               <span className="badge">12 in queue</span>
             </div>
             <div className="queue-list">
-              {data.orders.map(order => (
+              {data.orders.map((order) => (
                 <div key={order.id} className="queue-row">
                   <div>
                     <strong>{order.item}</strong>
@@ -96,18 +85,9 @@ export default function DashboardPage() {
               <span className="badge success">Healthy</span>
             </div>
             <div className="insight-box">
-              <div className="insight-row">
-                <ChefHat size={16} />
-                <span>High-spice guests are driving premium biryani sales</span>
-              </div>
-              <div className="insight-row">
-                <CircleDollarSign size={16} />
-                <span>Weekend family bundles are increasing average ticket value</span>
-              </div>
-              <div className="insight-row">
-                <Users size={16} />
-                <span>Jain-friendly dining campaigns show stronger repeat visits</span>
-              </div>
+              <div className="insight-row"><span>🍽️</span><span>High-spice guests are driving premium biryani sales.</span></div>
+              <div className="insight-row"><span>💸</span><span>Weekend family bundles are increasing average ticket value.</span></div>
+              <div className="insight-row"><span>👥</span><span>Jain-friendly dining campaigns show stronger repeat visits.</span></div>
             </div>
           </div>
         </section>
@@ -127,7 +107,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {data.reservations.map(booking => (
+              {data.reservations.map((booking) => (
                 <tr key={booking.name}>
                   <td>{booking.name}</td>
                   <td>{booking.time}</td>
