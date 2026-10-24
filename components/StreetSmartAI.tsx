@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { X, Send, Sparkles, Utensils, Info, MessageSquare, ChefHat, Flame } from 'lucide-react';
 
 interface Message {
@@ -13,11 +12,53 @@ interface Props {
   onClose: () => void;
 }
 
+const generateLocalAssistantReply = (restaurantName: string, userText: string) => {
+  const text = userText.toLowerCase();
+
+  if (text.includes('pricing') || text.includes('price') || text.includes('menu price')) {
+    return `For ${restaurantName}, a strong pricing approach is:
+- Keep premium dishes with clear value framing
+- Bundle biryani, thali, and dessert offers together
+- Use 2-tier pricing for family dining vs. quick meals
+- Highlight margin-friendly add-ons like naan, drinks, and desserts`;
+  }
+
+  if (text.includes('jain') || text.includes('veg') || text.includes('vegetarian')) {
+    return `For Jain / vegetarian guests, focus on:
+- Separate prep tools and clean utensils
+- Pure veg gravies with no onion or garlic
+- Family platter combinations and sattvic thali options
+- Clear labeling to reduce guest hesitation`;
+  }
+
+  if (text.includes('biryani') || text.includes('queue') || text.includes('kitchen')) {
+    return `To improve kitchen flow for biryani and tandoor service:
+- Pre-batch rice and marination in the afternoon
+- Split high-demand dishes into separate prep windows
+- Prioritize orders by table size and time sensitivity
+- Keep a dedicated hold tray for dine-in vs. takeout orders`;
+  }
+
+  if (text.includes('campaign') || text.includes('festival') || text.includes('marketing')) {
+    return `A strong local campaign should include:
+- Festival-specific family bundles
+- Personalized WhatsApp invites based on prior visits
+- High-margin add-on suggestions for dessert and drinks
+- A clear CTA: reserve a table or pre-order a special platter`;
+  }
+
+  return `Here is a practical operational suggestion for ${restaurantName}:
+- Review the top 5 best-selling dishes this week
+- Promote a combo offer to increase average check size
+- Prioritize guest satisfaction with fast table turnover and clean service
+- Use a simple WhatsApp follow-up after bookings and dine-in visits`;
+};
+
 const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { 
-      role: 'model', 
-      text: `Namaste! I am your AI Operations Concierge for ${restaurantName}. I can assist you with Indian menu pricing, festival campaign planning, Jain & dietary kitchen protocols, and table occupancy strategies. How may I assist your dinner service today?` 
+    {
+      role: 'model',
+      text: `Namaste! I am your operations concierge for ${restaurantName}. I can help with pricing, kitchen flow, Jain menu planning, festive promotions, and guest service strategy.`
     }
   ]);
   const [input, setInput] = useState('');
@@ -39,32 +80,12 @@ const StreetSmartAI: React.FC<Props> = ({ restaurantName, isOpen, onClose }) => 
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
-        contents: [...messages, { role: 'user', text: userText }].map(m => ({
-          role: m.role,
-          parts: [{ text: m.text }]
-        })),
-        config: {
-          systemInstruction: `You are the executive restaurant consultant & culinary strategist for '${restaurantName}', a premier Indian restaurant offering fine dining, banquets, and digital QR table ordering.
-You specialize in:
-- Authentic North Indian, Mughlai, South Indian, and street chaat hospitality.
-- Food cost management, menu engineering, and Thali pricing in Indian Rupees (₹).
-- Strict dietary guidelines (Jain Sattvic cooking without onion/garlic, Halal standards, and allergy management).
-- Festive promotions (Diwali, Eid, Holi, Navratri, Durga Puja, New Year, Sunday Brunches).
-- Kitchen flow between Tandoor, Curry gravies, and Biryani dum stations.
-
-Keep your responses practical, concise, polite (using Indian hospitality etiquette like Namaste and Pranam), and structured in clean bullet points.`,
-          temperature: 0.7,
-        }
-      });
-
-      const aiText = response.text || "I apologize, my culinary knowledge system could not process that request. Please ask again.";
-      setMessages(prev => [...prev, { role: 'model', text: aiText }]);
+      await new Promise(resolve => setTimeout(resolve, 350));
+      const reply = generateLocalAssistantReply(restaurantName, userText);
+      setMessages(prev => [...prev, { role: 'model', text: reply }]);
     } catch (error) {
-      console.error("AI Assistant Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Service temporarily unavailable. Please check your connectivity or try again shortly." }]);
+      console.error('Operations Assistant Error:', error);
+      setMessages(prev => [...prev, { role: 'model', text: 'The operations assistant is temporarily unavailable. Please try a different question.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -74,16 +95,15 @@ Keep your responses practical, concise, polite (using Indian hospitality etiquet
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:p-8 pointer-events-none">
-      <div className="bg-white w-full max-w-md h-[640px] max-h-[85vh] rounded-3xl shadow-2xl border border-stone-200 flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-8 duration-300 relative">
-        {/* Header */}
+      <div className="bg-white w-full max-w-md h-[640px] max-h-[85vh] rounded-3xl shadow-2xl border border-stone-200 flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-4">
         <div className="bg-stone-900 p-5 flex items-center justify-between text-white border-b border-stone-800">
           <div className="flex items-center gap-3">
             <div className="bg-amber-600 p-2 rounded-xl shadow-md">
               <ChefHat size={20} className="text-stone-950" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-base tracking-tight">AI Operations Concierge</h3>
-              <p className="text-[11px] text-amber-400 font-medium">Culinary & Hospitality Consultant</p>
+              <h3 className="font-serif font-bold text-base tracking-tight">Operations Concierge</h3>
+              <p className="text-[11px] text-amber-400 font-medium">Restaurant Strategy Assistant</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-stone-800 rounded-lg text-stone-400 hover:text-white transition-colors">
@@ -91,13 +111,12 @@ Keep your responses practical, concise, polite (using Indian hospitality etiquet
           </button>
         </div>
 
-        {/* Messaging Area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 bg-stone-50/50 text-xs">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed font-sans shadow-xs ${
-                m.role === 'user' 
-                  ? 'bg-amber-600 text-white rounded-tr-none' 
+                m.role === 'user'
+                  ? 'bg-amber-600 text-white rounded-tr-none'
                   : 'bg-white text-stone-800 border border-stone-200/80 rounded-tl-none whitespace-pre-wrap'
               }`}>
                 {m.text}
@@ -112,23 +131,22 @@ Keep your responses practical, concise, polite (using Indian hospitality etiquet
                   <div className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                   <div className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
-                <span>Consulting culinary knowledge base...</span>
+                <span>Reviewing guest operations...</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Quick Suggestion Pills */}
         <div className="px-4 py-2 bg-white border-t border-stone-100 overflow-x-auto whitespace-nowrap flex gap-2 no-scrollbar">
           {[
-            "Pricing our Diwali Thali",
-            "Jain cooking kitchen guidelines",
-            "Speed up Biryani station queue",
-            "Weekend upsell pairings"
+            'Pricing our Diwali thali',
+            'Jain kitchen guidelines',
+            'Speed up biryani station',
+            'Weekend upsell strategy'
           ].map(tip => (
-            <button 
+            <button
               key={tip}
-              onClick={() => { setInput(tip); }}
+              onClick={() => setInput(tip)}
               className="text-[11px] font-medium text-stone-600 bg-stone-50 hover:bg-amber-50 hover:text-amber-800 px-3 py-1.5 rounded-lg border border-stone-200 transition-colors"
             >
               {tip}
@@ -136,18 +154,17 @@ Keep your responses practical, concise, polite (using Indian hospitality etiquet
           ))}
         </div>
 
-        {/* Input Bar */}
         <div className="p-4 bg-white border-t border-stone-200">
           <div className="relative flex items-center">
-            <input 
+            <input
               type="text"
-              placeholder="Ask operations question (e.g. Jain menu, thali pricing)..."
+              placeholder="Ask restaurant operations question..."
               className="w-full pl-4 pr-12 py-3 bg-stone-50 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-500 text-xs text-stone-800"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
               className="absolute right-2 w-8 h-8 bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 shadow-xs"
