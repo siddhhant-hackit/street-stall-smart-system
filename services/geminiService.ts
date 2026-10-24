@@ -1,102 +1,71 @@
-import { GoogleGenAI } from "@google/genai";
 import { Customer, Order } from "../types";
 
-// Always use named parameter for apiKey and obtain exclusively from process.env.API_KEY.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const toTitle = (value: string) => value.trim() || "Guest";
+
+const getDietaryNote = (dietaryTags: string[] = []) => {
+  const normalized = dietaryTags.map(tag => tag.toLowerCase());
+  if (normalized.some(tag => tag.includes("jain") || tag.includes("veg"))) {
+    return "Mention dedicated Jain / vegetarian offerings prepared in separate cookware.";
+  }
+  return "Focus on authentic Indian favorites and family dining comfort.";
+};
 
 export const getAIGeneratedCampaign = async (
-  topic: string, 
-  customerName: string, 
+  topic: string,
+  customerName: string,
   spicePref: string,
   dietaryTags: string[] = [],
-  restaurantName: string = 'MasalaCraft'
+  restaurantName: string = "MasalaCraft"
 ) => {
-  try {
-    const isJainOrVeg = dietaryTags.some(t => t.toLowerCase().includes('jain') || t.toLowerCase().includes('veg'));
-    const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
-      contents: `Act as the Head of Hospitality & Marketing for '${restaurantName}', a premier Indian restaurant and banquet venue.
-Draft a highly personalized, warm WhatsApp & SMS campaign invitation for this valued guest.
+  const guestName = toTitle(customerName);
+  const spice = spicePref || "Medium";
+  const dietaryNote = getDietaryNote(dietaryTags);
+  const promoCode = `${restaurantName.replace(/\s+/g, "").slice(0, 4).toUpperCase()}FEST`;
 
-Guest Details:
-- Name: ${customerName}
-- Spice Preference: ${spicePref}
-- Dietary Preferences: ${dietaryTags.length > 0 ? dietaryTags.join(', ') : 'All authentic curries & grills'}
-- Campaign Topic/Festival: ${topic}
-${isJainOrVeg ? '- Note: Mention specialized Pure Veg/Jain offerings prepared in separate cookware.' : ''}
-
-Requirements:
-1. Include a warm Indian greeting (Namaste / Pranam / Greetings).
-2. Write WhatsApp-friendly copy with bold accents (*like this*), clean bullet points, and appropriate emojis.
-3. Feature 1 or 2 authentic Indian dishes matching their preference (e.g., Dum Biryani, Tandoori Tikka, Dal Makhani, Thali).
-4. Include an exclusive promo voucher code (e.g., FESTIVE15 or MAHARAJA20) and a table booking call-to-action.
-5. Keep it concise, respectful, and mouth-watering (under 130 words).`,
-      config: {
-        temperature: 0.75,
-        topP: 0.9,
-      }
-    });
-    return response.text;
-  } catch (error) {
-    console.error("Gemini Marketing Campaign Error:", error);
-    return `Namaste ${customerName}! Join us at ${restaurantName} for our special ${topic}. We have curated authentic regional delicacies suited to your ${spicePref} taste preference. Use code ZAIKA15 for 15% off your table reservation this week. Reply to book your table!`;
-  }
+  return `Namaste ${guestName}! 👋\n\nWe are delighted to invite you to ${restaurantName}'s special ${topic}. Our chefs have curated a menu for guests who love ${spice} spice and authentic Indian comfort.\n\n${dietaryNote}\n\nFeatured picks:\n• Royal Hyderabadi Dum Biryani\n• Tandoori Paneer Tikka\n• Dal Makhani with Butter Naan\n\nEnjoy a warm family dining experience with festive hospitality, chef recommendations, and a curated tasting platter.\n\nUse code *${promoCode}* to unlock a special table offer. Reserve your table today and bring your family for an unforgettable evening.\n\nPranam,\n${restaurantName} Hospitality Team`;
 };
 
-export const analyzeCustomerTrends = async (customers: Customer[], orders: Order[] = [], restaurantName: string = 'MasalaCraft') => {
-  try {
-    const guestData = JSON.stringify(customers.map(c => ({
-      name: c.name,
-      tier: c.tier,
-      pref: c.spicePreference,
-      tags: c.dietaryTags,
-      spend: c.totalSpend,
-      visits: c.visitCount,
-      dish: c.favoriteDish,
-      risk: c.churnRisk
-    })));
+export const analyzeCustomerTrends = async (
+  customers: Customer[],
+  orders: Order[] = [],
+  restaurantName: string = "MasalaCraft"
+) => {
+  const totalSpend = customers.reduce((sum, customer) => sum + (customer.totalSpend || 0), 0);
+  const vipCount = customers.filter(customer => customer.tier === "VIP" || customer.tier === "Gold").length;
+  const highSpice = customers.filter(customer => /teekha|spicy|hot/i.test(customer.spicePreference || "")).length;
+  const vegOrJain = customers.filter(customer =>
+    customer.dietaryTags.some(tag => /jain|veg|vegetarian/i.test(tag))
+  ).length;
+  const avgOrder = orders.length ? orders.reduce((sum, order) => sum + (order.total || 0), 0) / orders.length : 0;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
-      contents: `Act as a top restaurant consultant specializing in Indian cuisine, QSR, and fine dining operations for '${restaurantName}'.
-Analyze this patron and order telemetry:
-${guestData}
+  return `### Strategic Intelligence for ${restaurantName}
 
-Provide 4 high-impact, actionable insights categorized as follows:
-1. 🌶️ Spice & Regional Palette Trends (What spice levels and regional styles are driving high spend?)
-2. 👑 Maharaja VIP & Loyalty Retention (Which high-value patrons require proactive hospitality or anniversary outreach?)
-3. 🥗 Jain & Pure-Veg Revenue Opportunity (How can dedicated Jain/Veg menus increase weekend table bookings?)
-4. ⚡ Kitchen & Table Turn Optimization (Practical recommendations for Tandoor, Curry, and Biryani stations)
-
-Output your analysis in clean, structured, readable markdown with bold key takeaways and estimated revenue impact in ₹ INR.`,
-      config: {
-        temperature: 0.65,
-      }
-    });
-    return response.text;
-  } catch (error) {
-    console.error("Gemini Restaurant Analysis Error:", error);
-    return `### Strategic Intelligence for ${restaurantName}
-
-- **High Spice Loyalty**: Guests with 'Teekha' and 'Desi Spicy' preferences account for 64% of repeat Biryani & Tandoori orders. Introduce a weekend Chef's Fiery Kebab Tasting Board.
-- **Jain Dining Potential**: 28% of family dining parties contain at least one Jain or strict vegetarian member. Promoting separate Jain utensils and sattvic gravies directly lifts large table reservations by ~22%.
-- **VIP Churn Alert**: High-tier patrons inactive for over 30 days respond to personalized WhatsApp chef invites with 42% booking conversion.
-- **Beverage Upsell**: Pairing hot curries with Alphonso Mango Lassi or Spiced Chaas raises average check size by ₹180-240 per cover.`;
-  }
+- **High-spice loyalty**: ${highSpice} guests prefer bold spice profiles, making fiery dishes and chef specials a high-conversion upsell.
+- **Premium guest retention**: ${vipCount} high-value patrons should receive personalized offers and loyalty outreach to protect repeat visits.
+- **Dining diversity opportunity**: ${vegOrJain} customers prefer Jain or vegetarian-friendly experiences, which can be highlighted in family dining campaigns.
+- **Average order performance**: The current basket average is ₹${Math.round(avgOrder || 0)} per order, with strong room for upsell on drinks, breads, and dessert pairings.
+- **Action plan**: Promote family thali bundles, premium biryani counters, and dedicated Jain dining offers on weekends to improve table turns and average revenue.`;
 };
 
-export const suggestUpsellCombo = async (dishName: string, spicePreference: string = 'Medium') => {
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
-      contents: `Suggest 2 ideal Indian restaurant side/beverage pairings for a diner ordering "${dishName}" with "${spicePreference}" spice tolerance.
-Output only 2 short bullet points with dish name and reason in under 30 words.`,
-      config: {
-        temperature: 0.5,
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return `• Butter Garlic Naan (Perfect to scoop gravies)\n• Alphonso Mango Lassi (Balances spice intensity)`;
+export const suggestUpsellCombo = async (dishName: string, spicePreference: string = "Medium") => {
+  const normalizedDish = (dishName || "").toLowerCase();
+  const normalizedSpice = (spicePreference || "Medium").toLowerCase();
+
+  if (normalizedDish.includes("biryani")) {
+    return "• Mango Lassi — balances spice and adds a cooling finish\n• Garlic Naan — perfect for soaking up rich gravies";
   }
+
+  if (normalizedDish.includes("butter chicken") || normalizedDish.includes("chicken")) {
+    return "• Butter Garlic Naan — pairs well with creamy sauces\n• Mint Cooler — refreshes the palate after rich bites";
+  }
+
+  if (normalizedDish.includes("paneer") || normalizedDish.includes("veg") || normalizedDish.includes("dal")) {
+    return "• Jeera Rice — complements vegetarian gravies\n• Masala Chai — brings warmth and balance to the meal";
+  }
+
+  if (normalizedSpice.includes("teekha") || normalizedSpice.includes("spicy") || normalizedSpice.includes("hot")) {
+    return "• Sweet Lassi — cools the palate\n• Crispy Papad — adds crunch without overwhelming heat";
+  }
+
+  return "• Tandoori Roti — a classic side for curries\n• Alphonso Mango Lassi — a smooth, balanced pairing";
 };

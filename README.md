@@ -1,20 +1,33 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# RestaurantOS SaaS scaffold
 
-# Run and deploy your AI Studio app
+This repository now contains a Next.js-based SaaS starter for a restaurant operations platform.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/drive/17z0UluWb-f3KF7gCYs9l0mKoL2MOwvdP
+- Frontend: Next.js
+- Database: Supabase
+- Auth: Supabase Auth or Clerk-ready integration
+- Billing: Stripe
+- Deploy: Vercel
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+## Local setup
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Copy `.env.example` to `.env.local` and configure values.
 3. Run the app:
    `npm run dev`
+4. Open `http://localhost:3000`
+
+## Features included in the scaffold
+
+- Landing page for product positioning
+- Restaurant operations dashboard
+- Reservation overview
+- Kitchen queue and guest insights
+- SaaS-ready app structure for multi-tenant use
+- Supabase and Stripe integration placeholders
+
+## Notes
+
+This version intentionally avoids browser-side AI API usage so the app can be deployed and sold as a real SaaS product instead of a prototype tied to AI Studio or Gemini.
