@@ -1,37 +1,33 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# RestaurantOS SaaS scaffold
 
-# Street Stall Smart System
+This repository now contains a Next.js-based SaaS starter for a restaurant operations platform.
 
-A restaurant operations and customer engagement dashboard for managing bookings, live kitchen flow, menu updates, QR menu previews, guest records, and marketing campaigns.
+## Stack
 
-## Run locally
+- Frontend: Next.js
+- Database: Supabase
+- Auth: Supabase Auth or Clerk-ready integration
+- Billing: Stripe
+- Deploy: Vercel
 
-Prerequisites: Node.js
+## Local setup
 
 1. Install dependencies:
    `npm install`
-2. Start the app:
+2. Copy `.env.example` to `.env.local` and configure values.
+3. Run the app:
    `npm run dev`
-3. Build for production:
-   `npm run build`
+4. Open `http://localhost:3000`
 
-## Features
+## Features included in the scaffold
 
-- Executive dashboard
-- Live kitchen and order tracking
-- Reservations and bookings
-- Customer directory
-- Menu management
-- QR menu preview and table QR generation
-- Marketing campaign creation
-- Insights and operational recommendations
-
-## Deployment
-
-This project is built as a standard Vite React app and can be deployed to Vercel, Netlify, or any static hosting provider.
+- Landing page for product positioning
+- Restaurant operations dashboard
+- Reservation overview
+- Kitchen queue and guest insights
+- SaaS-ready app structure for multi-tenant use
+- Supabase and Stripe integration placeholders
 
 ## Notes
 
-The app is designed to be independent from AI Studio or Gemini and uses local business logic instead of a browser-only third-party AI API.
+This version intentionally avoids browser-side AI API usage so the app can be deployed and sold as a real SaaS product instead of a prototype tied to AI Studio or Gemini.
