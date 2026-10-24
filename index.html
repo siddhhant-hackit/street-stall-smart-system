@@ -1,46 +1,230 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MasalaCraft - Indian Restaurant CRM & KDS</title>
-  <meta name="description" content="Comprehensive Indian Restaurant CRM & Kitchen Display System with guest spice profiling, Jain & dietary tags, WhatsApp festival marketing, table reservations, live KDS by station, and digital QR ordering.">
-  <meta property="og:title" content="MasalaCraft - Indian Restaurant CRM & KDS">
-  <meta property="og:description" content="Comprehensive Indian Restaurant CRM & Kitchen Display System with guest spice profiling, Jain & dietary tags, WhatsApp festival marketing, table reservations, live KDS by station, and digital QR ordering.">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #faf7f2;
-      color: #1c1917;
-    }
-    .font-serif {
-      font-family: 'Playfair Display', serif;
-    }
-    .font-mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
-  </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "recharts": "https://esm.sh/recharts@^3.7.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
-<body>
-  <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Siddhant | Portfolio</title>
+    <meta
+      name="description"
+      content="Siddhant's personal portfolio and resume website."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav container">
+        <div class="brand">Siddhant</div>
+        <div class="nav-links">
+          <a href="#about">About</a>
+          <a href="#skills">Skills</a>
+          <a href="#projects">Projects</a>
+          <a href="#experience">Experience</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-inner">
+          <div class="hero-content">
+            <p class="eyebrow">Hello, I'm</p>
+            <h1>Siddhant</h1>
+            <h2>Web Developer & Problem Solver</h2>
+            <p>
+              I build responsive, modern, and user-friendly digital experiences
+              with a strong focus on usability, design, and functionality.
+            </p>
+            <div class="cta-group">
+              <a class="btn btn-primary" href="#projects">View Projects</a>
+              <a class="btn btn-secondary" href="#contact">Contact Me</a>
+            </div>
+          </div>
+
+          <div class="hero-card">
+            <div class="profile-badge">Available for work</div>
+            <div class="mini-card">
+              <span>Focus</span>
+              <strong>Frontend Development</strong>
+            </div>
+            <div class="mini-card">
+              <span>Stack</span>
+              <strong>HTML • CSS • JavaScript • React</strong>
+            </div>
+            <div class="mini-card">
+              <span>Goal</span>
+              <strong>Build practical digital solutions</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">About Me</p>
+            <h3>Passionate about creating clean and meaningful digital experiences.</h3>
+          </div>
+
+          <div class="about-grid">
+            <div class="about-card">
+              <p>
+                I’m a web developer focused on building polished, accessible,
+                and efficient interfaces. I enjoy turning ideas into real
+                experiences with strong design thinking, problem solving, and
+                technical execution.
+              </p>
+            </div>
+
+            <div class="about-card">
+              <ul class="info-list">
+                <li><strong>Name:</strong> Siddhant</li>
+                <li><strong>Location:</strong> India</li>
+                <li><strong>GitHub:</strong> github.com/siddhhant-hackit</li>
+                <li><strong>Email:</strong> siddhant@example.com</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="skills" class="section alt-bg">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Skills</p>
+            <h3>Technologies and tools I work with.</h3>
+          </div>
+
+          <div class="skills-grid">
+            <div class="skill-card">HTML5</div>
+            <div class="skill-card">CSS3</div>
+            <div class="skill-card">JavaScript</div>
+            <div class="skill-card">React</div>
+            <div class="skill-card">Responsive Design</div>
+            <div class="skill-card">Git & GitHub</div>
+            <div class="skill-card">UI/UX Basics</div>
+            <div class="skill-card">Problem Solving</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Projects</p>
+            <h3>Some of the work I’ve built and improved.</h3>
+          </div>
+
+          <div class="projects-grid">
+            <article class="project-card">
+              <h4>Street Smart System</h4>
+              <p>
+                A modern digital project focused on smart design, user flow, and
+                practical functionality for everyday use.
+              </p>
+              <a
+                href="https://github.com/siddhhant-hackit/streeetsmart-system"
+                target="_blank"
+                rel="noreferrer"
+                >View Project</a
+              >
+            </article>
+
+            <article class="project-card">
+              <h4>Portfolio Website</h4>
+              <p>
+                A clean personal portfolio and resume website designed to present
+                skills, work, and achievements effectively.
+              </p>
+              <a
+                href="https://siddhhant-hackit.github.io/streeetsmart-system"
+                target="_blank"
+                rel="noreferrer"
+                >Live Demo</a
+              >
+            </article>
+
+            <article class="project-card">
+              <h4>Business Landing Page</h4>
+              <p>
+                A simple yet professional landing page concept to highlight a
+                brand and convert visitors into interest.
+              </p>
+              <a href="#" target="_blank" rel="noreferrer">View Concept</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="experience" class="section alt-bg">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Experience</p>
+            <h3>My journey so far.</h3>
+          </div>
+
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="year">2025</div>
+              <div class="timeline-content">
+                <h4>Frontend Developer</h4>
+                <p>
+                  Building responsive web interfaces and improving user experience
+                  through better design and cleaner functionality.
+                </p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="year">2024</div>
+              <div class="timeline-content">
+                <h4>Web Development Projects</h4>
+                <p>
+                  Created portfolio and personal projects using HTML, CSS,
+                  JavaScript, and frontend best practices.
+                </p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="year">2023</div>
+              <div class="timeline-content">
+                <h4>Learning & Building</h4>
+                <p>
+                  Focused on improving technical skills through project-based
+                  learning and practical coding challenges.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="section contact-section">
+        <div class="container contact-box">
+          <div>
+            <p class="eyebrow">Contact</p>
+            <h3>Let’s build something useful together.</h3>
+          </div>
+          <a class="btn btn-primary" href="mailto:siddhant@example.com">
+            Email Me
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© 2025 Siddhant. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
 </html>
