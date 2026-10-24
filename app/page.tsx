@@ -1,12 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, BarChart3, ShieldCheck, Sparkles, Store, TrendingUp } from 'lucide-react';
-
-const features = [
-  { icon: Store, title: 'Restaurant operations', text: 'Track orders, reservations, staff workflow, and guest engagement in one place.' },
-  { icon: BarChart3, title: 'Revenue analytics', text: 'Measure order value, repeat visits, and high-value guest patterns.' },
-  { icon: Sparkles, title: 'Campaign engine', text: 'Create festival promos, WhatsApp offers, and loyalty campaigns in minutes.' },
-  { icon: ShieldCheck, title: 'Secure & scalable', text: 'Built with a SaaS-ready architecture for auth, billing, and multi-tenant access.' },
-];
+import { ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -21,7 +14,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="nav-actions">
-            <Link href="/dashboard" className="secondary-btn">Dashboard</Link>
+            <Link href="/todo" className="secondary-btn">To-do app</Link>
             <Link href="/dashboard" className="primary-btn">Get started <ArrowRight size={16} /></Link>
           </div>
         </nav>
@@ -36,7 +29,7 @@ export default function HomePage() {
             </p>
             <div className="cta-row">
               <Link href="/dashboard" className="primary-btn">Open app <ArrowRight size={16} /></Link>
-              <Link href="/dashboard" className="secondary-btn">View demo</Link>
+              <Link href="/todo" className="secondary-btn">Open to-do list</Link>
             </div>
             <div className="mini-stats">
               <div>
@@ -93,11 +86,11 @@ export default function HomePage() {
           <h2>Everything your restaurant team needs to run profitably</h2>
         </div>
         <div className="feature-grid">
-          {features.map(({ icon: Icon, title, text }) => (
-            <article key={title} className="feature-card">
-              <div className="feature-icon"><Icon size={18} /></div>
-              <h3>{title}</h3>
-              <p>{text}</p>
+          {[{ title: 'Restaurant operations', text: 'Track orders, reservations, staff workflow, and guest engagement in one place.' }, { title: 'Revenue analytics', text: 'Measure order value, repeat visits, and high-value guest patterns.' }, { title: 'Campaign engine', text: 'Create festival promos, WhatsApp offers, and loyalty campaigns in minutes.' }, { title: 'Secure & scalable', text: 'Built with a SaaS-ready architecture for auth, billing, and multi-tenant access.' }].map((feature) => (
+            <article key={feature.title} className="feature-card">
+              <div className="feature-icon">✦</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
             </article>
           ))}
         </div>
@@ -108,7 +101,7 @@ export default function HomePage() {
           <span className="eyebrow">Launch-ready stack</span>
           <h3>Next.js + Supabase + Stripe + Vercel</h3>
         </div>
-        <Link href="/dashboard" className="primary-btn">Go to dashboard</Link>
+        <Link href="/todo" className="primary-btn">Try to-do app</Link>
       </section>
     </main>
   );
